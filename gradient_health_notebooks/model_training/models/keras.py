@@ -59,8 +59,14 @@ class ModelFactory:
     def get_input_size(self, model_name):
         return self.models_[model_name]["input_shape"][:2]
 
-    def get_model(self, class_names, model_name="DenseNet121", use_base_weights=True,
-                  weights_path=None, input_shape=None):
+    def get_model(
+        self,
+        class_names,
+        model_name="DenseNet121",
+        use_base_weights=True,
+        weights_path=None,
+        input_shape=None,
+    ):
 
         if use_base_weights is True:
             base_weights = "imagenet"
@@ -71,7 +77,8 @@ class ModelFactory:
             importlib.import_module(
                 f"keras.applications.{self.models_[model_name]['module_name']}"
             ),
-            model_name)
+            model_name,
+        )
 
         if input_shape is None:
             input_shape = self.models_[model_name]["input_shape"]
@@ -83,9 +90,12 @@ class ModelFactory:
             input_tensor=img_input,
             input_shape=input_shape,
             weights=base_weights,
-            pooling="avg")
+            pooling="avg",
+        )
         x = base_model.output
-        predictions = Dense(len(class_names), activation="sigmoid", name="predictions")(x)
+        predictions = Dense(len(class_names), activation="sigmoid", name="predictions")(
+            x
+        )
         model = Model(inputs=img_input, outputs=predictions)
 
         if weights_path == "":
