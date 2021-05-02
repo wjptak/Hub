@@ -16,7 +16,10 @@ def chunk(content_bytes, previous_num_bytes, chunk_size):
         chunk_size(int): Each individual chunk will be assigned this many bytes maximum.
 
     Yields:
-        Each yield is a chunk of the `content_bytes`. Each chunk is of length (0, `chunk_size`].
+        chunk(bytes): Chunk of the `content_bytes`. Each chunk is of length (0, `chunk_size`].
+        relative_chunk_index(int): Relative index to the previous chunk. Relative index encodings:
+            0: Add to previous chunk.
+            > 0: Add to a new empty chunk that is `relative_chunk_index` chunks after the previous chunk. For example, if `relative_chunk_index` = 5, then 4 new empty chunks have already been created by this generator, & this is the 5th one.
     """
 
     if len(content_bytes) <= 0:
