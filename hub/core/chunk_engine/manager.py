@@ -68,6 +68,9 @@ class ChunkManager:
         self.storage_provider = DummyStorageProvider(storage_url)
         self.cache_chain = [self.storage_provider]
 
+        # TODO: chunk & store `index_map` to a StorageProvider.
+        self.index_map = []
+
         self.pickle = pickle
         if self.pickle:
             raise NotImplementedError("Pickle support is not available yet.")
@@ -90,7 +93,15 @@ class ChunkManager:
         # TODO: failure to get cache from cache_chain in exceptions.py
         raise Exception("No cache space available.")
 
-    def write(self, data: np.array):
+    def write(self, data: np.array, batched: bool = True):
+        """
+        Chunk data & write to this ChunkManager's StorageProvider.
+
+        Args:
+            data(np.array): Numpy array to be chunked/stored.
+            batched(bool): If True, `data`'s first axis is treated as a batch axis.
+        """
+
         # TODO: chunkmanager support for list(np.array)
         _assert_valid_shape(data)
 
@@ -104,6 +115,7 @@ class ChunkManager:
 
         # TODO: get previous chunk's num bytes
         previous_num_bytes = None
+
         for uncompressed_chunk_bytes, relative_chunk_index in chunk(
             data_bytes, previous_num_bytes, self.chunk_size
         ):
@@ -117,11 +129,13 @@ class ChunkManager:
                 break
 
             if relative_chunk_index == 0:
-                raise NotImplementedError()
+                raise NotImplementedError(
+                    "Haven't handled writing to previous chunk yet."
+                )
 
             # compress & store full chunk
             compressed_chunk_bytes = self.compress(uncompressed_chunk_bytes)
             key = "chunk_%i" % relative_chunk_index
             self.storage_provider.write(key, compressed_chunk_bytes)
 
-        # TODO: index map
+            # TODO: update index_map
