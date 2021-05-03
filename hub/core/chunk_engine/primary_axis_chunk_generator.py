@@ -8,7 +8,8 @@ def chunk_along_primary_axis(
     content_bytes: bytes, previous_num_bytes: int, chunk_size: int
 ) -> Generator[Tuple[bytes, int], None, None]:
     """
-    Generator function that chunks bytes along the primary axis only.
+    Generator function that chunks bytes along the primary axis only. The justification for using a generator instead of
+    returning a list is to save memory. Although, this generator can be used to compose a list.
 
     Primary axis chunking is the process of taking the input `content_bytes` & breaking it up into smaller chunks,
     the sizes of which are <= `chunk_size`.
