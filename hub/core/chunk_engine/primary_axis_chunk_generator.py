@@ -4,14 +4,20 @@ from typing import Generator, Tuple
 from hub.core.chunk_engine.exceptions import ChunkGeneratorError
 
 
-def chunk(
+def chunk_along_primary_axis(
     content_bytes: bytes, previous_num_bytes: int, chunk_size: int
 ) -> Generator[Tuple[bytes, int], None, None]:
     """
-    Generator function that chunks bytes.
+    Generator function that chunks bytes along the primary axis only.
 
-    Chunking is the process of taking the input `content_bytes` & breaking it up into smaller chunks,
+    Primary axis chunking is the process of taking the input `content_bytes` & breaking it up into smaller chunks,
     the sizes of which are <= `chunk_size`.
+
+    Primary axis chunking sees the data as a single axis stream of bytes. In other words, `content_bytes` is a
+    flattened array.
+
+    Note:
+        Primary axis chunking does not efficiently support slicing along any other axis besides the primary (or batch) one.
 
     Example 1:
         content_bytes = b"101010101010"

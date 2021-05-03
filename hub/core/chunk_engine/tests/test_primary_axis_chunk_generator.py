@@ -1,4 +1,8 @@
-from hub.core.chunk_engine.generator import chunk
+"""
+These tests are only for chunking along the primary/batch axis.
+"""
+
+from hub.core.chunk_engine.primary_axis_chunk_generator import chunk_along_primary_axis
 
 from util import (
     make_dummy_byte_array,
@@ -13,14 +17,18 @@ TRIALS_PER_TEST = 10
 
 
 def test_perfect_fit():
-    """This test is for the edge case where: (num_bytes % chunk_size == 0). In other words, bytes fit perfectly into chunks with none left over."""
+    """
+    This test is for the edge case where: (num_bytes % chunk_size == 0). In other words, bytes fit perfectly into chunks with none left over.
+    """
 
     for _ in range(TRIALS_PER_TEST):
         chunk_size = get_random_chunk_size()
         num_samples = get_random_num_samples()
 
         content = make_dummy_byte_array(chunk_size * num_samples)
-        gen = chunk(content, previous_num_bytes=None, chunk_size=chunk_size)
+        gen = chunk_along_primary_axis(
+            content, previous_num_bytes=None, chunk_size=chunk_size
+        )
 
         piece_count = 0
         for piece, relative_chunk_index in gen:
@@ -43,7 +51,9 @@ def test_perfect_fit():
 
 
 def test_first_partial_chunk():
-    """This test is for the edge case where: (num_bytes < chunk_size). In other words, bytes only partially fill 1 chunk."""
+    """
+    This test is for the edge case where: (num_bytes < chunk_size). In other words, bytes only partially fill 1 chunk.
+    """
 
     for _ in range(TRIALS_PER_TEST):
         chunk_size = get_random_chunk_size()
@@ -54,7 +64,9 @@ def test_first_partial_chunk():
         assert content_length < (chunk_size // 2), "test invalid"
 
         content = make_dummy_byte_array(content_length)
-        gen = chunk(content, previous_num_bytes=None, chunk_size=chunk_size)
+        gen = chunk_along_primary_axis(
+            content, previous_num_bytes=None, chunk_size=chunk_size
+        )
 
         piece_count = 0
         for piece, relative_chunk_index in gen:
@@ -77,7 +89,7 @@ def test_first_partial_chunk():
         assert old_content_length + content_length < chunk_size
 
         content = make_dummy_byte_array(content_length)
-        gen = chunk(
+        gen = chunk_along_primary_axis(
             content, previous_num_bytes=old_content_length, chunk_size=chunk_size
         )
 
@@ -95,7 +107,10 @@ def test_first_partial_chunk():
 
 
 def test_nth_partial_chunk():
-    """This test is for the edge case where: ((num_bytes > chunk_size) and (num_bytes % chunk_size != 0)). In other words, bytes fill at least 1 chunk fully, but the last chunk is only partially filled."""
+    """
+    This test is for the edge case where: ((num_bytes > chunk_size) and (num_bytes % chunk_size != 0)).
+    In other words, bytes fill at least 1 chunk fully, but the last chunk is only partially filled.
+    """
 
     for _ in range(TRIALS_PER_TEST):
         chunk_size = get_random_chunk_size()
@@ -106,7 +121,9 @@ def test_nth_partial_chunk():
         assert content_length % chunk_size != 0
 
         content = make_dummy_byte_array(content_length)
-        gen = chunk(content, previous_num_bytes=None, chunk_size=chunk_size)
+        gen = chunk_along_primary_axis(
+            content, previous_num_bytes=None, chunk_size=chunk_size
+        )
 
         piece_count = 0
         previous_num_bytes = None
@@ -140,7 +157,7 @@ def test_nth_partial_chunk():
         assert content_length % chunk_size != 0
 
         content = make_dummy_byte_array(content_length)
-        gen = chunk(
+        gen = chunk_along_primary_axis(
             content, previous_num_bytes=previous_num_bytes, chunk_size=chunk_size
         )
 
