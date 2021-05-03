@@ -10,10 +10,6 @@ _compressor_function_map = {
 }
 
 
-def _assert_valid_shape(a: np.array):
-    assert np.prod(a.shape) > 0, "array shape must not contain any 0s"
-
-
 # TODO: delete dummy storage provider
 class DummyStorageProvider:
     def __init__(self, url: str):
@@ -103,7 +99,11 @@ class ChunkManager:
         """
 
         # TODO: chunkmanager support for list(np.array)
-        _assert_valid_shape(data)
+        if np.prod(data.shape) <= 0:
+            raise ValueError(
+                "Data shape may not contain a 0 (this means array is empty). Got shape: %s"
+                % str(data.shape)
+            )
 
         # TODO: normalize data.shape before adding to chunks
 
