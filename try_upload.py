@@ -14,7 +14,6 @@ from hub.util.cache_chain import get_cache_chain
 # TODO: we shouldn't have to do this
 dataset_name = "asl_alphabet"
 s3 = S3Provider("s3://snark-test/%s" % dataset_name)
-local = LocalProvider("./%s" % dataset_name)
 storage = get_cache_chain(
     [MemoryProvider(dataset_name), s3],
     [
@@ -23,8 +22,8 @@ storage = get_cache_chain(
 )
 
 storage.clear()  # TODO: overwrite=True should clear
+storage["mnop"] = b"123"
 ds = Dataset(mode="w", provider=storage)
-print(ds)
 
 folder_paths = glob.glob("datasets/asl_alphabet_train/asl_alphabet_train/*")
 
