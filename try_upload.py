@@ -12,7 +12,7 @@ from hub.core.chunk_engine import read_tensor_meta, write_tensor_meta
 from hub.core.storage import MemoryProvider, S3Provider, LocalProvider
 from hub.util.cache_chain import get_cache_chain
 
-SMOKE_TEST = True
+SMOKE_TEST = False
 IMAGE_SIZE = (300, 300)  # all images are reshaped to this size
 CHANNELS = 3
 
@@ -29,7 +29,7 @@ storage = get_cache_chain(
     ],
 )
 
-s3.clear()  # TODO: overwrite=True should clear
+# s3.clear()  # TODO: overwrite=True should clear
 storage["mnop"] = b"123"  # TODO: we should not need to do this
 ds = Dataset(mode="w", provider=storage)
 
