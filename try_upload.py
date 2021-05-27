@@ -31,7 +31,7 @@ storage = get_cache_chain(
     ],
 )
 
-s3.clear()  # TODO: overwrite=True should clear
+# s3.clear()  # TODO: overwrite=True should clear
 storage["mnop"] = b"123"  # TODO: we should not need to do this
 ds = Dataset(mode="w", provider=storage)
 
