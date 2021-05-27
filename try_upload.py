@@ -12,12 +12,14 @@ from hub.core.chunk_engine import read_tensor_meta, write_tensor_meta
 from hub.core.storage import MemoryProvider, S3Provider, LocalProvider
 from hub.util.cache_chain import get_cache_chain
 
-SMOKE_TEST = False
+SMOKE_TEST = True
+SMOKE_TEST_SAMPLES = 3
+
 IMAGE_SIZE = (300, 300)  # all images are reshaped to this size
 CHANNELS = 3
 
 if SMOKE_TEST:
-    print("\n\nWARNING! SMOKE TEST WILL ONLY USE 1 IMAGE PER CLASS!\n\n")
+    print("\n\nWARNING! SMOKE TEST WILL ONLY USE %i IMAGE PER CLASS!\n\n" % SMOKE_TEST_SAMPLES)
 
 # TODO: we shouldn't have to do this
 dataset_name = "asl_alphabet"
@@ -29,7 +31,7 @@ storage = get_cache_chain(
     ],
 )
 
-# s3.clear()  # TODO: overwrite=True should clear
+s3.clear()  # TODO: overwrite=True should clear
 storage["mnop"] = b"123"  # TODO: we should not need to do this
 ds = Dataset(mode="w", provider=storage)
 
@@ -40,7 +42,7 @@ def get_paths(parent):
 
 if SMOKE_TEST:
     # only use one image per class
-    NUM_IMAGES = len(folder_paths)
+    NUM_IMAGES = len(folder_paths) * SMOKE_TEST_SAMPLES
 else:
     NUM_IMAGES = sum([len(get_paths(parent)) for parent in folder_paths])
 
@@ -58,18 +60,18 @@ image_idx = 0
 for label, folder_path in enumerate(folder_paths):
     label_name = folder_path.split("/")[-1]
     label_names.append(label_name)
-    labels.append(label)
 
     paths = get_paths(folder_path)
 
-    for path in tqdm.tqdm(
+    for sample_num, path in enumerate(tqdm.tqdm(
         paths, total=len(paths), desc="(%i/%i) loading %s images into \"images\" array" % (label, len(folder_paths), label_name)
-    ):
+    )):
         img = Image.open(path)
         img = img.resize(IMAGE_SIZE)
         images[image_idx] = np.array(img, dtype=np.uint8)
+        labels.append(label)
 
-        if SMOKE_TEST:
+        if SMOKE_TEST and sample_num >= SMOKE_TEST_SAMPLES - 1:
             break
 
 print("begin data upload...")
