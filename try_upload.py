@@ -13,7 +13,7 @@ from hub.util.cache_chain import get_cache_chain
 
 # TODO: we shouldn't have to do this
 dataset_name = "asl_alphabet"
-s3 = S3Provider("s3://snark-test/%s" % dataset_name)
+s3 = S3Provider("s3://hub-2.0-datasets/%s" % dataset_name)
 storage = get_cache_chain(
     [MemoryProvider(dataset_name), s3],
     [
