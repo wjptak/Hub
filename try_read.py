@@ -16,7 +16,10 @@ storage = get_cache_chain(
 ds = Dataset(mode="r", provider=storage)
 
 print(ds.tensors.keys())
-a = ds["O"][0].numpy()
-print(a.shape)
-plt.imshow(a[0])
+i, j = 0, 10
+images = ds["images"][i:j].numpy()
+labels = ds["labels"][i:j].numpy()
+print(images.shape, "labels:", labels)
+
+plt.imshow(images[0])
 plt.show()
