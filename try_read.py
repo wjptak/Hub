@@ -1,3 +1,4 @@
+import matplotlib.pyplot as plt
 from hub import Dataset
 
 from hub.core.storage import MemoryProvider, S3Provider, LocalProvider
@@ -9,9 +10,13 @@ storage = get_cache_chain(
     [MemoryProvider(dataset_name), s3],
     [
         256 * 1024 * 1024,
-    ],)
+    ],
+)
 
 ds = Dataset(mode="r", provider=storage)
 
 print(ds.tensors.keys())
-print(ds["O"][0].numpy())
+a = ds["O"][0].numpy()
+print(a.shape)
+plt.imshow(a[0])
+plt.show()
