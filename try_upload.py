@@ -63,7 +63,7 @@ for label, folder_path in enumerate(folder_paths):
     paths = get_paths(folder_path)
 
     for path in tqdm.tqdm(
-        paths, total=len(paths), desc="(%i/%i) loading %s images into arrays" % (label, len(folder_paths), label_name)
+        paths, total=len(paths), desc="(%i/%i) loading %s images into \"images\" array" % (label, len(folder_paths), label_name)
     ):
         img = Image.open(path)
         img = img.resize(IMAGE_SIZE)
