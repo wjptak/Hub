@@ -18,7 +18,9 @@ storage = get_cache_chain(
 
 ds = Dataset(mode="r", provider=storage)
 meta = read_tensor_meta("images", ds.provider)
-label_names = meta["label_names"]  # TODO: API should do this, something like ds["labels"][0].name would be very convenient
+label_names = meta[
+    "label_names"
+]  # TODO: API should do this, something like ds["labels"].names[0] would be very convenient
 
 for sample in tqdm.tqdm(ds, total=len(ds), desc="iterating through ds"):
     x, t = sample["images"].numpy(), sample["labels"].numpy()
