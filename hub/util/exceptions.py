@@ -230,13 +230,6 @@ class S3ListError(Exception):
     """Catchall for all errors encountered while retrieving a list of objects present in S3"""
 
 
-class InvalidCompressor(Exception):
-    def __init__(self, available_compressors):
-        super().__init__(
-            f"Compressor is not supported. Supported compressions: {available_compressors}"
-        )
-
-
 class InvalidImageDimensions(Exception):
     def __init__(self, actual_dims, expected_dims):
         super().__init__(
