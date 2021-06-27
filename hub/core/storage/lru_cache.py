@@ -1,4 +1,5 @@
 from collections import OrderedDict
+from hub.util.cachable import Cachable
 from typing import Set
 
 from hub.core.storage.provider import StorageProvider
@@ -34,6 +35,10 @@ class LRUCache(StorageProvider):
         # tracks keys in lru order, stores size of value, only keys present in this exist in cache
         self.lru_sizes: OrderedDict[str, int] = OrderedDict()
         self.dirty_keys: Set[str] = set()  # keys present in cache but not next_storage
+
+        # keys for objects stored in cache (first storage only)
+        self.cachable_object_keys: Set[str] = set()
+
         self.cache_used = 0
 
     def flush(self):
@@ -42,7 +47,12 @@ class LRUCache(StorageProvider):
         """
         self.check_readonly()
         for key in self.dirty_keys:
-            self.next_storage[key] = self.cache_storage[key]
+            item = self.cache_storage[key]
+            if isinstance(item, Cachable):
+                self.next_storage[key] = item.tobytes()
+            else:
+                self.next_storage[key] = item
+
         self.dirty_keys.clear()
         self.next_storage.flush()
 
@@ -83,6 +93,9 @@ class LRUCache(StorageProvider):
             size = self.lru_sizes.pop(path)
             self.cache_used -= size
 
+        if isinstance(value, Cachable):
+            self._insert_in_cache(path, value)
+            self.cachable_object_keys.add(path)
         if len(value) <= self.cache_size:
             self._insert_in_cache(path, value)
             self.dirty_keys.add(path)
@@ -123,11 +136,19 @@ class LRUCache(StorageProvider):
         """Flushes the content of the cache and and then deletes contents of all the layers of it.
         This doesn't delete data from the actual storage.
         """
+
+        # invalidate cachable references
+        for key in self.cachable_object_keys:
+            item = self.cache_storage[key]
+            if isinstance(item, Cachable):
+                item.invalidate()
+
         self.check_readonly()
         self.flush()
         self.cache_used = 0
         self.lru_sizes.clear()
         self.dirty_keys.clear()
+        self.cachable_object_keys.clear()
         self.cache_storage.clear()
 
         if hasattr(self.next_storage, "clear_cache"):
