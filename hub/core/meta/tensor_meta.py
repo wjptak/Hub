@@ -72,6 +72,7 @@ class TensorMeta(Meta):
             required_meta = _required_meta_from_htype(htype)
             required_meta.update(htype_overwrite)
             _validate_compression(required_meta)
+            self.__dict__.update(required_meta)
 
     def check_compatibility(self, shape: Tuple[int], dtype: Union[np.dtype, str]):
         """Check if this `tensor_meta` is compatible with `array`. The provided `array` is treated as a single sample.
