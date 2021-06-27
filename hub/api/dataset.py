@@ -1,5 +1,4 @@
 from hub.constants import DEFAULT_HTYPE
-import warnings
 from typing import Callable, Dict, Optional, Union, Tuple, List
 import numpy as np
 
@@ -26,6 +25,7 @@ from hub.util.exceptions import (
     TensorDoesNotExistError,
 )
 from hub.util.get_storage_provider import get_storage_provider
+from hub.util.keys import get_dataset_meta_key
 from hub.client.client import HubBackendClient
 from hub.client.log import logger
 from hub.util.path import get_path_from_storage
@@ -221,14 +221,14 @@ class Dataset:
 
     def _load_meta(self):
         if dataset_exists(self.storage):
-            logger.info(f"Hub Dataset {self.path} successfully loaded.")
-            self.meta = DatasetMeta.load(self.storage)
+            # logger.info(f"Hub Dataset {self.path} successfully loaded.")
+            self.meta = DatasetMeta(self.storage[get_dataset_meta_key()])
             for tensor_name in self.meta.tensors:
                 self.tensors[tensor_name] = Tensor(tensor_name, self.storage)
         elif len(self.storage) > 0:
             raise PathNotEmptyException
         else:
-            self.meta = DatasetMeta.create(self.storage)
+            self.meta = DatasetMeta()
             self.flush()
             if self.path.startswith("hub://"):
                 self.client.create_dataset_entry(
@@ -311,7 +311,7 @@ class Dataset:
         self.storage.clear()
         if self.path.startswith("hub://"):
             self.client.delete_dataset_entry(self.org_id, self.ds_name)
-            logger.info(f"Hub Dataset {self.path} successfully deleted.")
+            # logger.info(f"Hub Dataset {self.path} successfully deleted.")
 
     @staticmethod
     def from_path(path: str):

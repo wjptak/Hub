@@ -1,3 +1,4 @@
+from hub.util.keys import get_tensor_meta_key
 from hub.core.sample import Sample
 from typing import List, Sequence, Union, Optional, Tuple, Dict
 from hub.util.shape import ShapeInterval
@@ -110,7 +111,11 @@ class Tensor:
 
     @property
     def meta(self):
-        return TensorMeta.load(self.key, self.storage)
+        key = get_tensor_meta_key(self.key)
+        item = self.storage[key]
+        if isinstance(item, TensorMeta):
+            return item
+        return TensorMeta(item)
 
     @property
     def shape(self) -> Tuple[Optional[int], ...]:

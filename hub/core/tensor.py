@@ -52,16 +52,16 @@ def create_tensor(
     if tensor_exists(key, storage):
         raise TensorAlreadyExistsError(key)
 
-    TensorMeta.create(
-        key,
-        storage,
+    tensor_meta = TensorMeta(
         htype=htype,
         sample_compression=sample_compression,
         chunk_compression=chunk_compression,
         **kwargs,
     )
+    index_meta = IndexMeta()
 
-    IndexMeta.create(key, storage)
+    storage[get_tensor_meta_key(key)] = tensor_meta
+    storage[get_index_meta_key(key)] = index_meta
 
 
 def _get_metas_from_kwargs(
