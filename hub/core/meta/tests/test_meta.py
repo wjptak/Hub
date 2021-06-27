@@ -1,9 +1,7 @@
+from hub.core.meta.meta import Meta
 import hub
 from hub.core.storage.provider import StorageProvider
-from hub.core.meta.dataset_meta import DatasetMeta
 from hub.core.tests.common import parametrize_all_caches
-
-from hub.util.keys import get_dataset_meta_key
 
 
 def _assert_version(meta):
@@ -11,33 +9,35 @@ def _assert_version(meta):
 
 
 @parametrize_all_caches
-def test_dataset_meta(storage: StorageProvider):
-    key = get_dataset_meta_key()
+def test_meta(storage: StorageProvider):
+    key = "dummy_meta"
 
-    ds_meta = DatasetMeta()
+    meta = Meta()
+    meta.literally_anything = []
 
-    assert ds_meta.is_valid
-    assert ds_meta.tensors == []
-    ds_meta.tensors.append("tensor")
-    _assert_version(ds_meta)
+    assert meta.is_valid
+    assert meta.literally_anything == []
+    meta.literally_anything.append("AAAAAAHHHHHH")
+    _assert_version(meta)
 
-    storage[key] = ds_meta
+    storage[key] = meta
 
-    assert type(storage[key]) == DatasetMeta
+    assert type(storage[key]) == Meta
 
     storage.flush()
 
-    assert ds_meta.is_valid
-    assert type(storage[key]) == DatasetMeta
+    assert meta.is_valid
+    assert type(storage[key]) == Meta
     assert type(storage.next_storage[key]) == bytes
 
     storage.clear_cache()
 
-    assert not ds_meta.is_valid
+    assert not meta.is_valid
     assert type(storage[key]) == bytes
 
-    del ds_meta
+    del meta
 
-    ds_meta = DatasetMeta(storage[key])
+    meta = Meta(storage[key])
 
-    assert ds_meta.tensors == ["tensor"]
+    assert meta.literally_anything == ["AAAAAAHHHHHH"]
+    _assert_version(meta)
