@@ -93,15 +93,18 @@ class LRUCache(StorageProvider):
             size = self.lru_sizes.pop(path)
             self.cache_used -= size
 
-        if isinstance(value, Cachable):
-            self._insert_in_cache(path, value)
-            self.cachable_object_keys.add(path)
         if len(value) <= self.cache_size:
             self._insert_in_cache(path, value)
             self.dirty_keys.add(path)
+            if isinstance(value, Cachable):
+                self.cachable_object_keys.add(path)
         else:  # larger than cache, directly send to next layer
             self.dirty_keys.discard(path)
-            self.next_storage[path] = value
+            self.cachable_object_keys.discard(path)
+            if isinstance(value, Cachable):
+                self.next_storage[path] = value.tobytes()
+            else:
+                self.next_storage[path] = value
 
         self.maybe_flush()
 
@@ -122,6 +125,7 @@ class LRUCache(StorageProvider):
             self.cache_used -= size
             del self.cache_storage[path]
             self.dirty_keys.discard(path)
+            self.cachable_object_keys.discard(path)
             deleted_from_cache = True
 
         try:
@@ -136,6 +140,11 @@ class LRUCache(StorageProvider):
         """Flushes the content of the cache and and then deletes contents of all the layers of it.
         This doesn't delete data from the actual storage.
         """
+        self.check_readonly()
+        self.flush()
+        self.cache_used = 0
+        self.lru_sizes.clear()
+        self.dirty_keys.clear()
 
         # invalidate cachable references
         for key in self.cachable_object_keys:
@@ -143,11 +152,6 @@ class LRUCache(StorageProvider):
             if isinstance(item, Cachable):
                 item.invalidate()
 
-        self.check_readonly()
-        self.flush()
-        self.cache_used = 0
-        self.lru_sizes.clear()
-        self.dirty_keys.clear()
         self.cachable_object_keys.clear()
         self.cache_storage.clear()
 
@@ -162,6 +166,7 @@ class LRUCache(StorageProvider):
         self.cache_used = 0
         self.lru_sizes.clear()
         self.dirty_keys.clear()
+        self.cachable_object_keys.clear()
         self.cache_storage.clear()
         self.next_storage.clear()
 
@@ -197,6 +202,7 @@ class LRUCache(StorageProvider):
         if key in self.dirty_keys:
             self.next_storage[key] = self.cache_storage[key]
             self.dirty_keys.discard(key)
+            self.cachable_object_keys.discard(key)
         del self.cache_storage[key]
         self.cache_used -= itemsize
 
@@ -211,10 +217,11 @@ class LRUCache(StorageProvider):
             ReadOnlyError: If the provider is in read-only mode.
         """
         self.check_readonly()
-        self._free_up_space(len(value))
+        l = len(value)
+        self._free_up_space(l)
         self.cache_storage[path] = value
-        self.cache_used += len(value)
-        self.lru_sizes[path] = len(value)
+        self.cache_used += l
+        self.lru_sizes[path] = l
 
     def _list_keys(self):
         """Helper function that lists all the objects present in the cache and the underlying storage.

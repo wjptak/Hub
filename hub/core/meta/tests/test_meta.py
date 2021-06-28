@@ -33,6 +33,7 @@ def test_meta(storage: StorageProvider):
     storage.clear_cache()
 
     assert not meta.is_valid
+    assert key not in storage.cache_storage
     assert type(storage[key]) == bytes
 
     del meta
