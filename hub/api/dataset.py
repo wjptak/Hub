@@ -153,7 +153,7 @@ class Dataset:
         sample_compression: str = None,
         chunk_compression: str = None,
         **kwargs,
-    ):
+    ) -> Tensor:
         """Creates a new tensor in the dataset.
 
         Args:
@@ -222,13 +222,21 @@ class Dataset:
     def _load_meta(self):
         if dataset_exists(self.storage):
             # logger.info(f"Hub Dataset {self.path} successfully loaded.")
-            self.meta = DatasetMeta(self.storage[get_dataset_meta_key()])
+
+            item = self.storage[get_dataset_meta_key()]
+
+            if isinstance(item, DatasetMeta):
+                self.meta = item
+            else:
+                self.meta = DatasetMeta(item)
+
             for tensor_name in self.meta.tensors:
                 self.tensors[tensor_name] = Tensor(tensor_name, self.storage)
         elif len(self.storage) > 0:
             raise PathNotEmptyException
         else:
             self.meta = DatasetMeta()
+            self.storage[get_dataset_meta_key()] = self.meta
             self.flush()
             if self.path.startswith("hub://"):
                 self.client.create_dataset_entry(

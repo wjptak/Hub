@@ -245,7 +245,12 @@ class Tensor:
         """
 
         return read_samples_from_tensor(
-            self.key, self.storage, index=self.index, aslist=aslist
+            self.key,
+            self.storage,
+            self.meta,
+            self.index_meta,
+            index=self.index,
+            aslist=aslist,
         )
 
     def __str__(self):

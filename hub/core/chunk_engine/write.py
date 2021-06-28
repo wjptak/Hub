@@ -66,7 +66,7 @@ def write_samples(
                 extra_sample_meta=extra_sample_meta,
             )
 
-        tensor_meta.update_with_sample(sample.array)
+        tensor_meta.update_with_sample(sample.shape, sample.dtype)
         tensor_meta.length += 1
 
 

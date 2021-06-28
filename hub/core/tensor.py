@@ -168,6 +168,8 @@ def extend_tensor(
 def read_samples_from_tensor(
     key: str,
     storage: StorageProvider,
+    tensor_meta: TensorMeta,
+    index_meta: IndexMeta,
     index: Index = Index(),
     aslist: bool = False,
 ) -> Union[np.ndarray, Sequence[np.ndarray]]:
@@ -187,9 +189,6 @@ def read_samples_from_tensor(
     Returns:
         np.ndarray: Array containing the sample(s) in the `array_slice` slice.
     """
-
-    index_meta = IndexMeta.load(key, storage)
-    tensor_meta = TensorMeta.load(key, storage)
 
     index_entries = [
         index_meta.entries[i] for i in index.values[0].indices(len(index_meta.entries))

@@ -111,7 +111,7 @@ def assert_all_samples_have_expected_compression(
 ):
     """If `USE_UNIFORM_COMPRESSION_PER_SAMPLE`, `original_compressions` is used as expected compressions."""
 
-    index_meta = IndexMeta.load(tensor.key, tensor.storage)
+    index_meta = tensor.index_meta
 
     assert len(index_meta.entries) == len(original_compressions)
     for i, index_entry in enumerate(index_meta.entries):
