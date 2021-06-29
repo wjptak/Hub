@@ -28,11 +28,16 @@ def fn3(i, mul=1, copy=1):
 @parametrize_all_dataset_storages
 def test_single_transform_hub_dataset(ds):
     with Dataset("./test/transform_hub_in") as data_in:
+        # delete contents in case last run didn't finish
+        data_in.delete()
+        data_in.flush()
+
         data_in.create_tensor("image")
         data_in.create_tensor("label")
         for i in range(100):
             data_in.image.append(i * np.ones((100, 100)))
             data_in.label.append(i * np.ones((1,)))
+
     data_in = Dataset("./test/transform_hub_in")
     ds_out = ds
     ds_out.create_tensor("image")

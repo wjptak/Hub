@@ -64,22 +64,6 @@ def create_tensor(
     storage[get_index_meta_key(key)] = index_meta
 
 
-def _get_metas_from_kwargs(
-    key: str, storage: StorageProvider, **kwargs
-) -> Tuple[TensorMeta, IndexMeta]:
-    if "tensor_meta" in kwargs:
-        tensor_meta = kwargs["tensor_meta"]
-    else:
-        tensor_meta = TensorMeta.load(key, storage)
-
-    if "index_meta" in kwargs:
-        index_meta = kwargs["index_meta"]
-    else:
-        index_meta = IndexMeta.load(key, storage)
-
-    return tensor_meta, index_meta
-
-
 def append_tensor(
     sample: Optional[Union[np.ndarray, Sample, float, int]],
     key: str,

@@ -1,9 +1,7 @@
-from hub.core.meta.index_meta import IndexMeta
 from hub.util.keys import get_index_meta_key, get_tensor_meta_key
 from hub.core.sample import Sample
 from typing import List, Sequence, Union, Optional, Tuple, Dict
 from hub.util.shape import ShapeInterval
-from hub.core.meta.tensor_meta import TensorMeta
 
 import numpy as np
 
@@ -13,6 +11,8 @@ from hub.core.tensor import (
     read_samples_from_tensor,
     tensor_exists,
 )
+from hub.core.meta.tensor_meta import TensorMeta
+from hub.core.meta.index_meta import IndexMeta
 from hub.core.typing import StorageProvider
 from hub.util.exceptions import TensorDoesNotExistError, InvalidKeyTypeError
 from hub.core.index import Index
@@ -124,19 +124,33 @@ class Tensor:
 
     @property
     def meta(self):
-        key = get_tensor_meta_key(self.key)
-        item = self.storage[key]
+        tensor_meta_key = get_tensor_meta_key(self.key)
+        item = self.storage[tensor_meta_key]
+
         if isinstance(item, TensorMeta):
+            if not item.is_valid:
+                raise Exception
+            self.storage[tensor_meta_key] = item
             return item
-        return TensorMeta(item)
+        else:
+            meta = TensorMeta(buffer=item)
+            self.storage[tensor_meta_key] = meta
+            return meta
 
     @property
     def index_meta(self):
-        key = get_index_meta_key(self.key)
-        item = self.storage[key]
+        index_meta_key = get_index_meta_key(self.key)
+        item = self.storage[index_meta_key]
+
         if isinstance(item, IndexMeta):
+            if not item.is_valid:
+                raise Exception
+            self.storage[index_meta_key] = item
             return item
-        return IndexMeta(item)
+        else:
+            meta = IndexMeta(item)
+            self.storage[index_meta_key] = meta
+            return meta
 
     @property
     def shape(self) -> Tuple[Optional[int], ...]:

@@ -49,6 +49,8 @@ class LRUCache(StorageProvider):
         for key in self.dirty_keys:
             item = self.cache_storage[key]
             if isinstance(item, Cachable):
+                if not item.is_valid:
+                    raise Exception  # TODO
                 self.next_storage[key] = item.tobytes()
             else:
                 self.next_storage[key] = item
@@ -97,11 +99,15 @@ class LRUCache(StorageProvider):
             self._insert_in_cache(path, value)
             self.dirty_keys.add(path)
             if isinstance(value, Cachable):
+                if not value.is_valid:
+                    raise Exception  # TODO
                 self.cachable_object_keys.add(path)
         else:  # larger than cache, directly send to next layer
             self.dirty_keys.discard(path)
             self.cachable_object_keys.discard(path)
             if isinstance(value, Cachable):
+                if not value.is_valid:
+                    raise Exception  # TODO
                 self.next_storage[path] = value.tobytes()
             else:
                 self.next_storage[path] = value
@@ -150,6 +156,8 @@ class LRUCache(StorageProvider):
         for key in self.cachable_object_keys:
             item = self.cache_storage[key]
             if isinstance(item, Cachable):
+                if not item.is_valid:
+                    raise Exception  # TODO
                 item.invalidate()
 
         self.cachable_object_keys.clear()

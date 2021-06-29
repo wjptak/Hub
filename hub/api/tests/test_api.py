@@ -18,8 +18,10 @@ def test_persist_local(local_storage):
     ds = Dataset(local_storage.root, local_cache_size=512)
     ds.create_tensor("image")
     ds.image.extend(np.ones((4, 4096, 4096)))
+    assert len(ds) == 4
 
     ds_new = Dataset(local_storage.root)
+    print(ds_new.meta)
     assert len(ds_new) == 4
 
     assert ds_new.image.shape == (4, 4096, 4096)

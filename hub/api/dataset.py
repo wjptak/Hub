@@ -219,28 +219,33 @@ class Dataset:
         for i in range(len(self)):
             yield self[i]
 
+    @property
+    def meta(self):
+        key = get_dataset_meta_key()
+        value = self.storage[key]
+        if isinstance(value, DatasetMeta):
+            if not value.is_valid:
+                raise Exception
+            self.storage[key] = value
+            return value
+        else:
+            meta = DatasetMeta(buffer=value)
+            self.storage[key] = meta
+            return meta
+
     def _load_meta(self):
+        key = get_dataset_meta_key()
         if dataset_exists(self.storage):
-            # logger.info(f"Hub Dataset {self.path} successfully loaded.")
-
-            item = self.storage[get_dataset_meta_key()]
-
-            if isinstance(item, DatasetMeta):
-                self.meta = item
-            else:
-                self.meta = DatasetMeta(item)
-
             for tensor_name in self.meta.tensors:
                 self.tensors[tensor_name] = Tensor(tensor_name, self.storage)
         elif len(self.storage) > 0:
             raise PathNotEmptyException
         else:
-            self.meta = DatasetMeta()
-            self.storage[get_dataset_meta_key()] = self.meta
+            self.storage[key] = DatasetMeta()
             self.flush()
             if self.path.startswith("hub://"):
                 self.client.create_dataset_entry(
-                    self.org_id, self.ds_name, self.meta.to_dict(), public=self.public
+                    self.org_id, self.ds_name, self.meta.__dict__, public=self.public
                 )
 
     @property
