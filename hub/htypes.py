@@ -29,7 +29,7 @@ HTYPE_CONFIGURATIONS: Dict[str, Dict] = {
         "chunk_compression": UNCOMPRESSED,
     },
     "class_label": {
-        "dtype": "uint32",
+        "dtype": "int64",
         "class_names": [],
     },
     "bbox": {"dtype": "float32"},
