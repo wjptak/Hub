@@ -1,0 +1,1 @@
+{"htype": "generic", "chunk_size": 32000000, "min_shape": [1], "max_shape": [1], "length": 100, "sample_compression": "uncompressed", "chunk_compression": "uncompressed", "dtype": "float64", "version": "2.0a7"}
