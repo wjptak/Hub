@@ -97,9 +97,8 @@ class ImageClassification(UnstructuredDataset):
         for file_path in iterator:
             image = hub.load(file_path)
             class_name = _class_name_from_path(file_path)
-            label = np.array(
-                [self.class_names.index(class_name)]
-            )  # TODO: should be able to pass just an integer to `tensor.append`
+
+            label = np.uint32(self.class_names.index(class_name))
 
             set_name = _set_name_from_path(file_path) if use_set_prefix else ""
             ds[images_tensor_map[set_name]].append(image)

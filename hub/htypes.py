@@ -28,7 +28,6 @@ HTYPE_CONFIGURATIONS: Dict[str, Dict] = {
         "sample_compression": "png",
         "chunk_compression": UNCOMPRESSED,
     },
-    # TODO: hub auto needs dtype as int64
     "class_label": {
         "dtype": "uint32",
         "class_names": [],

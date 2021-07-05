@@ -67,7 +67,6 @@ class Dataset:
         path: Optional[str] = None,
         read_only: bool = False,
         index: Index = None,
-        mode: str = "a",
         memory_cache_size: int = DEFAULT_MEMORY_CACHE_SIZE,
         local_cache_size: int = DEFAULT_LOCAL_CACHE_SIZE,
         creds: Optional[dict] = None,
@@ -129,8 +128,6 @@ class Dataset:
 
         self.client = HubBackendClient(token=token)
         self._token = token
-
-        # self.mode = mode
 
         if storage is not None and hasattr(storage, "root"):
             # Extract the path for printing, if path not given
