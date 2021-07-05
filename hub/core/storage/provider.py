@@ -1,5 +1,6 @@
 from abc import ABC, abstractmethod
 from collections.abc import MutableMapping
+from hub.core.storage.cachable import Cachable
 from typing import Optional
 
 from hub.constants import BYTE_PADDING

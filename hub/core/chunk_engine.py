@@ -4,7 +4,6 @@ from typing import Optional, Sequence, Union, Tuple
 from hub.util.exceptions import (
     CorruptedMetaError,
     DynamicTensorNumpyError,
-    TensorDoesNotExistError,
 )
 from hub.core.meta.tensor_meta import TensorMeta
 from hub.core.index.index import Index
@@ -47,7 +46,11 @@ class ChunkEngine:
     def __init__(
         self, key: str, cache: LRUCache, max_chunk_size: int = DEFAULT_MAX_CHUNK_SIZE
     ):
-        """Handles creating chunks and filling them with incoming samples.
+        """Handles creating `Chunk`s and filling them with incoming samples.
+
+        Data delegation:
+            All samples must live inside a single chunk. A chunk holds the information required to
+            decompose a given sample  # TODO: finish docstring
 
         Args:
             key (str): Tensor key.
@@ -57,6 +60,9 @@ class ChunkEngine:
         Raises:
             ValueError: If invalid max chunk size.
         """
+
+        # TODO: elaborate further in docstring (including our encoders)
+        # TODO: add examples
 
         self.key = key
         self.cache = cache
@@ -132,12 +138,14 @@ class ChunkEngine:
         incoming_num_bytes = len(incoming_buffer)
 
         last_chunk = self.last_chunk or self._create_new_chunk()
-        last_chunk_extended = False
 
         # update tensor meta first because erroneous meta information is better than un-accounted for data.
         self.tensor_meta.check_compatibility(shape, dtype)
         self.tensor_meta.update(shape, dtype, num_samples)
 
+        # TODO: turn into more functions
+
+        last_chunk_extended = False
         forwarding_buffer = incoming_buffer
         if last_chunk.is_under_min_space(self.min_chunk_size_target):
             last_chunk_size = last_chunk.num_data_bytes
@@ -152,43 +160,37 @@ class ChunkEngine:
 
             # combine if count is same
             if combined_chunk_ct == chunk_ct_content:
-                last_chunk.append(forwarding_buffer[:extra_bytes], self.max_chunk_size)
+                last_chunk.append_sample(
+                    forwarding_buffer[:extra_bytes], self.max_chunk_size
+                )
                 forwarding_buffer = forwarding_buffer[extra_bytes:]
-                self._synchronize_last_chunk(False)
+                self._synchronize_last_chunk(num_samples, incoming_num_bytes, shape)
                 last_chunk_extended = True
 
-        new_chunks = []
-        connect_with_last = last_chunk_extended
-
-        # `or not connect_with_last` is necessary to support empty samples that weren't written to the previous chunk
-        while len(forwarding_buffer) > 0 or not connect_with_last:
+        # check if `last_chunk_extended` to handle empty samples
+        if len(forwarding_buffer) > 0 or not last_chunk_extended:
             new_chunk = self._create_new_chunk()
-            end_byte = min(len(forwarding_buffer), self.max_chunk_size)
+            new_chunk.append_sample(forwarding_buffer, self.max_chunk_size)
+            self._synchronize_last_chunk(num_samples, incoming_num_bytes, shape)
 
-            new_chunk.append(forwarding_buffer[:end_byte], self.max_chunk_size)
-            forwarding_buffer = forwarding_buffer[end_byte:]
+    def _synchronize_last_chunk(
+        self, num_new_samples: int, num_new_bytes: int, shape: Tuple[int]
+    ):
+        """For the last chunk, registers samples with the chunk ID encoder and updates the headers.
+        This should be called every time new sample(s) get put into the last chunk.
 
-            self._synchronize_last_chunk(connect_with_last)
-
-            new_chunks.append(new_chunk)
-            connect_with_last = True
-
-        # only the head chunk (the first chunk this sample was written to) should have it's headers updated
-        head_chunk = last_chunk if last_chunk_extended else new_chunks[0]
-        head_chunk.update_headers(incoming_num_bytes, num_samples, shape)
-
-    def _synchronize_last_chunk(self, connect_with_last: bool):
-        """Registers new samples added to the last chunk in the `chunk_id_encoder` and makes sure connectivity is preserved."""
-
-        num_new_samples = 1
-        if connect_with_last:
-            # if connected with last, there are no new samples, only a continuation of the previous
-            num_new_samples = 0
-            self.chunk_id_encoder.register_connection_to_last_chunk_id()
+        Args:
+            num_new_samples (int): Samples that have already been added to the last chunk.
+            num_new_bytes (int): The length of the buffer added to the last chunk.
+            shape (Tuple[int]): Shape of the samples (requires all samples to have the same shape for this sync).
+        """
 
         self.chunk_id_encoder.register_samples_to_last_chunk_id(num_new_samples)
+        self.last_chunk.update_headers(num_new_bytes, num_new_samples, shape)
 
     def _create_new_chunk(self):
+        """Creates and returns a new `Chunk`. Automatically creates an ID for it and puts a reference in the cache."""
+
         chunk_id = self.chunk_id_encoder.generate_chunk_id()
         chunk = Chunk()
         chunk_name = ChunkIdEncoder.name_from_id(chunk_id)
@@ -257,58 +259,51 @@ class ChunkEngine:
     ) -> Union[np.ndarray, Sequence[np.ndarray]]:
         """Reads samples from chunks and returns as numpy arrays. If `aslist=True`, returns a sequence of numpy arrays."""
 
-        tensor_meta = self.tensor_meta
-
-        expect_compressed = tensor_meta.sample_compression != UNCOMPRESSED
-        dtype = tensor_meta.dtype
-
         length = self.num_samples
         enc = self.chunk_id_encoder
         last_shape = None
         samples = []
 
         for global_sample_index in index.values[0].indices(length):
-            if global_sample_index < 0:
-                # TODO: negative indexing
-                raise NotImplementedError("Negative indexing is not yet supported.")
+            chunk_id = enc[global_sample_index]
+            chunk_name = ChunkIdEncoder.name_from_id(chunk_id)
+            chunk_key = get_chunk_key(self.key, chunk_name)
+            chunk = self.cache.get_cachable(chunk_key, Chunk)
+            sample = self.read_sample_from_chunk(global_sample_index, chunk)
+            shape = sample.shape
 
-            chunk_ids = enc.__getitem__(global_sample_index)
+            if not aslist and last_shape is not None:
+                if shape != last_shape:
+                    raise DynamicTensorNumpyError(self.key, index, "shape")
 
-            buffer: Union[bytearray, memoryview] = bytearray()
-            for i, chunk_id in enumerate(chunk_ids):
-                chunk_name = ChunkIdEncoder.name_from_id(chunk_id)
-
-                chunk_key = get_chunk_key(self.key, chunk_name)
-                chunk: Chunk = self.cache.get_cachable(chunk_key, Chunk)
-                local_sample_index = enc.get_local_sample_index(global_sample_index)
-
-                # head chunk is the first chunk a sample lives in (has the header information for that sample)
-                is_head_chunk = i == 0
-                if is_head_chunk:
-                    shape = chunk.shapes_encoder[local_sample_index]
-                    sb, eb = chunk.byte_positions_encoder[local_sample_index]
-
-                # TODO: optimize this to reduce memory copies for samples spanning accross chunks
-                if len(chunk_ids) == 1:
-                    # if sample lives in a single chunk, no need to copy the data
-                    buffer = chunk.memoryview_data
-                else:
-                    buffer += chunk.memoryview_data
-
-                if not aslist and last_shape is not None:
-                    if shape != last_shape:
-                        raise DynamicTensorNumpyError(self.key, index, "shape")
-
-            buffer = buffer[sb:eb]
-            if expect_compressed:
-                sample = decompress_array(buffer, shape)
-            else:
-                sample = np.frombuffer(buffer, dtype=dtype).reshape(shape)
             samples.append(sample)
-
             last_shape = shape
 
         return _format_samples(samples, index, aslist)
+
+    def read_sample_from_chunk(
+        self, global_sample_index: int, chunk: Chunk
+    ) -> np.ndarray:
+        """Read a sample from a chunk, converts the global index into a local index. Handles decompressing if applicable."""
+
+        tensor_meta = self.tensor_meta
+        expect_compressed = tensor_meta.sample_compression != UNCOMPRESSED
+        dtype = tensor_meta.dtype
+
+        enc = self.chunk_id_encoder
+
+        buffer = chunk.memoryview_data
+        local_sample_index = enc.get_local_sample_index(global_sample_index)
+        shape = chunk.shapes_encoder[local_sample_index]
+        sb, eb = chunk.byte_positions_encoder[local_sample_index]
+
+        buffer = buffer[sb:eb]
+        if expect_compressed:
+            sample = decompress_array(buffer, shape)
+        else:
+            sample = np.frombuffer(buffer, dtype=dtype).reshape(shape)
+
+        return sample
 
     def _check_sample_size(self, num_bytes: int):
         if num_bytes > self.min_chunk_size_target:
