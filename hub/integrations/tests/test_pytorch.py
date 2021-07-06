@@ -4,7 +4,6 @@ from hub.util.remove_cache import remove_memory_cache
 import pytest
 from hub.util.exceptions import DatasetUnsupportedPytorch
 from hub.core.storage.memory import MemoryProvider
-from hub.tests.common import assert_all_samples_have_expected_compression
 from hub.constants import UNCOMPRESSED
 from hub.api.dataset import Dataset
 import numpy as np
@@ -196,12 +195,6 @@ def test_pytorch_with_compression(ds: Dataset):
         images.extend(np.ones((16, 100, 100, 3), dtype="uint8"))
         labels.extend(np.ones((16, 1), dtype="int32"))
 
-    # make sure data is appropriately compressed
-    assert images.meta.sample_compression == "png"
-    assert labels.meta.sample_compression == UNCOMPRESSED
-    assert_all_samples_have_expected_compression(images, ["png"] * 16)
-    assert_all_samples_have_expected_compression(labels, [UNCOMPRESSED] * 16)
-
     if PY38 and isinstance(remove_memory_cache(ds.storage), MemoryProvider):
         with pytest.raises(DatasetUnsupportedPytorch):
             ptds = ds.pytorch(workers=2)
@@ -279,3 +272,45 @@ def test_pytorch_large_old(ds):
 
         np.testing.assert_array_equal(actual_image, expected_image)
         np.testing.assert_array_equal(actual_label, expected_label)
+
+
+@requires_torch
+@parametrize_all_dataset_storages
+def test_custom_tensor_order(ds):
+    import torch
+
+    with ds:
+        tensors = ["a", "b", "c", "d"]
+        for t in tensors:
+            ds.create_tensor(t)
+            ds[t].extend(np.random.random((3, 4, 5)))
+
+    if PY38 and isinstance(remove_memory_cache(ds.storage), MemoryProvider):
+        with pytest.raises(DatasetUnsupportedPytorch):
+            ptds = ds.pytorch(workers=2)
+        return
+
+    ptds_new = ds.pytorch(workers=2, tensors=["c", "d", "a"])
+    ptds_old = dataset_to_pytorch(
+        ds, workers=2, tensors=["c", "d", "a"], python_version_warning=False
+    )
+    for ptds in [ptds_new, ptds_old]:
+        # always use num_workers=0, when using hub workers
+        dl = torch.utils.data.DataLoader(
+            ptds,
+            batch_size=1,
+            num_workers=0,
+        )
+
+        for i, batch in enumerate(dl):
+            c1, d1, a1 = batch
+            a2 = batch["a"]
+            c2 = batch["c"]
+            d2 = batch["d"]
+            assert "b" not in batch
+            np.testing.assert_array_equal(a1, a2)
+            np.testing.assert_array_equal(c1, c2)
+            np.testing.assert_array_equal(d1, d2)
+            np.testing.assert_array_equal(a1[0], ds.a.numpy()[i])
+            np.testing.assert_array_equal(c1[0], ds.c.numpy()[i])
+            np.testing.assert_array_equal(d1[0], ds.d.numpy()[i])
