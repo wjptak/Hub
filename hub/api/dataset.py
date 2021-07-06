@@ -201,7 +201,10 @@ class Dataset:
 
         self.tensors[name] = tensor
         self.meta.tensors.append(name)
-
+        if self.path.startswith("hub://"):
+            self.client.update_dataset_tensors(
+                self.org_id, self.ds_name, self.meta.to_dict()
+            )
         return tensor
 
     __getattr__ = __getitem__

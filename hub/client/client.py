@@ -203,3 +203,10 @@ class HubBackendClient:
             suffix,
             endpoint=self.endpoint(),
         ).json()
+
+    def update_dataset_tensors(self, username, dataset_name, meta):
+        tag = f"{username}/{dataset_name}"
+        suffix = UPDATE_SUFFIX.format(username, dataset_name)
+        self.request(
+            "PUT", suffix, endpoint=self.endpoint(), json={"meta": meta}
+        ).json()
