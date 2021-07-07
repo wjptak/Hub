@@ -98,21 +98,3 @@ class MemoryProvider(StorageProvider):
         """Clears the provider."""
         self.check_readonly()
         self.dict = {}
-
-    def get_cachable(self, path: str, expected_class):
-        item = self[path]
-
-        if isinstance(item, Cachable):
-            if type(item) != expected_class:
-                raise ValueError(
-                    f"'{path}' was expected to have the class '{expected_class.__name__}'. Instead, got: '{type(item)}'."
-                )
-            return item
-
-        if isinstance(item, (bytes, memoryview)):
-            obj = expected_class.frombuffer(item)
-            if len(obj) <= self.cache_size:
-                self._insert_in_cache(path, obj)
-            return obj
-
-        raise ValueError(f"Item at '{path}' got an invalid type: '{type(item)}'.")
