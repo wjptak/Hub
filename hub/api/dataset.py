@@ -11,7 +11,7 @@ from hub.constants import (
 )
 
 from hub.core.meta.dataset_meta import DatasetMeta
-
+import warnings
 from hub.core.typing import StorageProvider
 from hub.core.index import Index
 from hub.integrations import dataset_to_pytorch, dataset_to_tensorflow
@@ -99,9 +99,12 @@ class Dataset:
         self.client = HubBackendClient(token=token)
         self._token = token
 
-        if self.path.startswith("hub://"):
-            split_path = self.path.split("/")
-            self.org_id, self.ds_name = split_path[2], split_path[3]
+        if self.path is not None:
+            if self.path.startswith("hub://"):
+                split_path = self.path.split("/")
+                self.org_id, self.ds_name = split_path[2], split_path[3]
+        else:
+            return self.path
 
         self.public = public
         self._load_meta()
@@ -389,15 +392,14 @@ class Dataset:
 
         # TODO: this is not properly working (write a test for this too). expected it to pick up already structured datasets, but it doesn't
         if _dataset_has_tensors(**kwargs):
-            return Dataset(**kwargs, mode="r")
+            return Dataset(**kwargs)
 
-        ds = Dataset(**kwargs, mode="w")
+        with Dataset(**kwargs) as ds:
+            # TODO: auto detect which `UnstructuredDataset` subclass to use
+            unstructured = ImageClassification(source)
+            unstructured.structure(ds, use_progress_bar=use_progress_bar)
 
-        # TODO: auto detect which `UnstructuredDataset` subclass to use
-        unstructured = ImageClassification(source)
-        unstructured.structure(ds, use_progress_bar=use_progress_bar)
-
-        return Dataset(**kwargs, mode="r")
+        return Dataset(**kwargs)
 
     @staticmethod
     def from_kaggle(
@@ -431,7 +433,7 @@ class Dataset:
         _warn_kwargs("from_kaggle", **kwargs)
 
         if _dataset_has_tensors(**kwargs):
-            return Dataset(**kwargs, mode="r")
+            return Dataset(**kwargs)
 
         try:
             download_kaggle_dataset(
@@ -470,7 +472,7 @@ class Dataset:
 
 
 def _dataset_has_tensors(**kwargs):
-    ds = Dataset(**kwargs, mode="r")
+    ds = Dataset(**kwargs)
     return len(ds.keys()) > 0
 
 
