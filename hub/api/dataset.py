@@ -245,22 +245,6 @@ class Dataset:
                     self.org_id, self.ds_name, self.meta.as_dict(), public=self.public
                 )
 
-    @property
-    def mode(self):
-        return self._mode
-
-    @mode.setter
-    def mode(self, new_mode):
-        if new_mode == "r":
-            self.storage.enable_readonly()
-        else:
-            self.storage.disable_readonly()
-        self._mode = new_mode
-
-    @property
-    def mode(self):
-        return self._mode
-
     @hub_reporter.record_call
     def pytorch(
         self,
@@ -482,12 +466,6 @@ def _warn_kwargs(caller: str, **kwargs):
             "Dataset already exists, skipping ingestion and returning a read-only Dataset."
         )
         return  # no other warnings should print
-
-    if "mode" in kwargs:
-        warnings.warn(
-            'Argument `mode` should not be passed to `%s`. Ignoring and using `mode="write"`.'
-            % caller
-        )
 
     if "path" in kwargs:
         # TODO: generalize warns
