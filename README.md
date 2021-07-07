@@ -1,5 +1,5 @@
 <img src="https://static.scarf.sh/a.png?x-pxid=bc3c57b0-9a65-49fe-b8ea-f711c4d35b82" /><p align="center">
-    <img src="https://github.com/activeloopai/new-hub/blob/istranic/readme/docs/logos/hub_logo_compact.png" width="30%"/>
+    <img src="https://github.com/activeloopai/Hub/blob/main/media/hub_logo_compact.png" width="30%"/>
     </br>
     <h2 align="center">Dataset management for deep learning applications
  </h2>
@@ -25,7 +25,7 @@
 ## Why use Hub?
 **Data scientists spend the majority of their time building infrastructure, transferring data, and writing boilerplate code. Hub streamlines these tasks so that users can focus on building amazing machine learning models 💻.**
 
-Hub enables users to stream unlimited amounts of data from the cloud to any machine without sacrificing performance compared to local storage 🚀. In addition, Hub connects datasets to PyTorch and TensorFlow with minimal boilerplate code, and it contains powerful tools for dataset version control, building machine learning pipelines, and running distributed workloads.
+Hub enables users to stream unlimited amounts of data from the cloud to any machine without sacrificing performance compared to local storage 🚀. In addition, Hub connects datasets to PyTorch and TensorFlow with minimal boilerplate code, and we are currently adding powerful tools for dataset version control, building machine learning pipelines, and running distributed workloads.
 
 Hub is best suited for unstructured datasets such as images, videos, point clouds, or text. It works locally or on any cloud.
 
@@ -36,26 +36,23 @@ Google, Waymo, Red Cross, Omdena, and Rarebase use Hub.
 
 * Easy dataset creation and hosting on Activeloop Cloud or S3
 * Rapid dataset streaming to any machine
-* Simple dataset integration to PyTorch with no boilerplate code
-* Dataset query using custom filter functions without having to download the entire dataset
-* Rapid data processing using transforms on distributed compute
-* Linear data pipelines
-* Rapid [visualization](http://app.activeloop.ai/?utm_source=github&utm_medium=repo&utm_campaign=readme) of image datasets via integration with Activeloop Platform
- <p align="center">
-    <br>
-    <img src="https://raw.githubusercontent.com/activeloopai/Hub/master/docs/visualizer%20gif.gif" width="75%"/>
-    </br>
-Visualization of a dataset uploaded to Hub via <a href = "https://app.activeloop.ai/datasets/popular?utm_source=github&utm_medium=readme&utm_campaign=desc">app.activeloop.ai</a>.
-</p>
+* Simple dataset integration to PyTorch and TensorFlow with no boilerplate code
 
 ### Coming Soon
 
 * Datasets hosting on Google Cloud and Azure
-* Datasets integration to TensorFlow
 * Dataset version control
 * Dataset query using text-based query language
 * Loading of data in random order without having to download the entire dataset
-* DAG and continuous pipelines
+* Dataset query using custom filter functions without having to download the entire dataset
+* Rapid data processing using transforms on distributed compute
+* Data pipelines
+* Rapid visualization of image datasets via integration with Activeloop Platform
+ <p align="center">
+    <br>
+    <img src="https://raw.githubusercontent.com/activeloopai/Hub/master/docs/visualizer%20gif.gif" width="75%"/>
+    </br>
+Visualization of a dataset uploaded to Hub
 
 ## How does Hub work?
 
@@ -66,31 +63,24 @@ Hub also significantly reduces the time to build machine learning workflows, bec
 ## Getting Started with Hub
 Hub is written in 100% python and can be quickly installed using pip.
 ```sh
-pip3 install hub==2.0a7
-
-OR
-
-pip install git+https://github.com/activeloopai/Hub.git@release/2.0
+pip3 install hub
 ```
 Accessing datasets in Hub requires a single line of code. Run this snippet to get the first image in the [MNIST database](https://app.activeloop.ai/dataset/activeloop/mnist/?utm_source=github&utm_medium=repo&utm_campaign=readme) in the numpy array format:
 ```python
 from hub import Dataset
 
-mnist = Dataset("hub://activeloop/mnist_train")
-mnist_np = mnist.image[0].numpy()
+mnist = Dataset("hub://activeloop/mnist-train")
+mnist_np = mnist.images[0].numpy()
 ```
 To access and train a classifier on your own Hub dataset stored in cloud, run:
 ```python
-import torch
 from hub import Dataset
 
 my_dataset = Dataset("s3://bucket_name/dataset_folder")
-my_dataset_pytorch = my_dataset.pytorch(workers=2)
+my_dataloader = my_dataset.pytorch()
 
-train_loader = torch.utils.data.DataLoader(my_dataset_pytorch, batch_size=1, num_workers=0)
-
-for batch in train_loader:
-    print(batch["image"])
+for batch in my_dataloader:
+    print(batch["images"])
 
 ## Training Loop Here ##
 ```
