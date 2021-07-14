@@ -14,22 +14,18 @@ They are also used to inform default compression modes and data types.
 from re import L
 from typing import Dict
 from hub.constants import (
-    DEFAULT_CHUNK_COMPRESSION,
     DEFAULT_HTYPE,
-    DEFAULT_SAMPLE_COMPRESSION,
-    UNCOMPRESSED,
-    DEFAULT_CHUNK_MIN_TARGET,
+    REQUIRE_USER_SPECIFICATION,
 )
 
 HTYPE_CONFIGURATIONS: Dict[str, Dict] = {
     DEFAULT_HTYPE: {"dtype": None},
     "image": {
         "dtype": "uint8",
-        "sample_compression": "png",
-        "chunk_compression": UNCOMPRESSED,
+        "sample_compression": REQUIRE_USER_SPECIFICATION,
     },
     "class_label": {
-        "dtype": "int32",
+        "dtype": "uint32",
         "class_names": [],
     },
     "bbox": {"dtype": "float32"},
@@ -42,10 +38,8 @@ HTYPE_CONFIGURATIONS: Dict[str, Dict] = {
 
 # these configs are added to every `htype`
 COMMON_CONFIGS = {
-    "chunk_size": DEFAULT_CHUNK_MIN_TARGET,
-    "custom_meta": {},
-    "chunk_compression": DEFAULT_CHUNK_COMPRESSION,
-    "sample_compression": DEFAULT_SAMPLE_COMPRESSION,
+    "sample_compression": None,
+    "dtype": None,
 }
 
 

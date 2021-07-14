@@ -41,6 +41,9 @@ def compress_array(array: np.ndarray, compression: str) -> bytes:
     if compression not in SUPPORTED_COMPRESSIONS:
         raise UnsupportedCompressionError(compression)
 
+    if compression is None:
+        return array.tobytes()
+
     try:
         img = to_image(array)
         out = BytesIO()

@@ -1,8 +1,11 @@
-from hub.util.exceptions import SampleCompressionError, UnsupportedCompressionError
+from hub.util.exceptions import (
+    SampleCompressionError,
+    TensorMetaMissingRequiredValue,
+    UnsupportedCompressionError,
+)
 import pytest
 from hub.api.tensor import Tensor
-from hub.tests.common import TENSOR_KEY, assert_all_samples_have_expected_compression
-from hub.constants import UNCOMPRESSED
+from hub.tests.common import TENSOR_KEY
 import numpy as np
 
 import hub
@@ -36,14 +39,12 @@ def _populate_compressed_samples(tensor: Tensor, cat_path, flower_path, count=1)
 
 @parametrize_all_dataset_storages
 def test_populate_compressed_samples(ds: Dataset, cat_path, flower_path):
-    images = ds.create_tensor(TENSOR_KEY, htype="image")
+    images = ds.create_tensor(TENSOR_KEY, htype="image", sample_compression="png")
 
     assert images.meta.dtype == "uint8"
     assert images.meta.sample_compression == "png"
-    assert images.meta.chunk_compression == UNCOMPRESSED
 
-    original_compressions = _populate_compressed_samples(images, cat_path, flower_path)
-    assert_all_samples_have_expected_compression(images, original_compressions)
+    _populate_compressed_samples(images, cat_path, flower_path)
 
     assert images[0].numpy().shape == (900, 900, 3)
     assert images[1].numpy().shape == (513, 464, 4)
@@ -56,14 +57,12 @@ def test_populate_compressed_samples(ds: Dataset, cat_path, flower_path):
 
 @parametrize_all_dataset_storages
 def test_iterate_compressed_samples(ds: Dataset, cat_path, flower_path):
-    images = ds.create_tensor(TENSOR_KEY, htype="image")
+    images = ds.create_tensor(TENSOR_KEY, htype="image", sample_compression="png")
 
     assert images.meta.dtype == "uint8"
     assert images.meta.sample_compression == "png"
-    assert images.meta.chunk_compression == UNCOMPRESSED
 
-    original_compressions = _populate_compressed_samples(images, cat_path, flower_path)
-    assert_all_samples_have_expected_compression(images, original_compressions)
+    _populate_compressed_samples(images, cat_path, flower_path)
 
     expected_shapes = [
         (900, 900, 3),
@@ -85,13 +84,13 @@ def test_iterate_compressed_samples(ds: Dataset, cat_path, flower_path):
 
 @parametrize_all_dataset_storages
 def test_uncompressed(ds: Dataset):
-    images = ds.create_tensor(TENSOR_KEY, sample_compression=UNCOMPRESSED)
+    images = ds.create_tensor(TENSOR_KEY, sample_compression=None)
 
     images.append(np.ones((100, 100, 100)))
     images.extend(np.ones((3, 101, 2, 1)))
-    original_compressions = [UNCOMPRESSED] * 4
-
-    assert_all_samples_have_expected_compression(images, original_compressions)
+    ds.clear_cache()
+    np.testing.assert_array_equal(images[0].numpy(), np.ones((100, 100, 100)))
+    np.testing.assert_array_equal(images[1:4].numpy(), np.ones((3, 101, 2, 1)))
 
 
 @pytest.mark.xfail(raises=SampleCompressionError, strict=True)
@@ -125,3 +124,8 @@ def test_jpeg_bad_shapes(memory_ds: Dataset, bad_shape):
 def test_unsupported_compression(memory_ds: Dataset):
     memory_ds.create_tensor(TENSOR_KEY, sample_compression="bad_compression")
     # TODO: same tests but with `dtype`
+
+
+@pytest.mark.xfail(raises=TensorMetaMissingRequiredValue, strict=True)
+def test_missing_sample_compression_for_image(memory_ds: Dataset):
+    memory_ds.create_tensor("tensor", htype="image")

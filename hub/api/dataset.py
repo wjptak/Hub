@@ -1,22 +1,17 @@
-from hub.constants import DEFAULT_HTYPE
-import warnings
-from typing import Callable, Dict, Optional, Union, Tuple, List
+from hub.core.storage.provider import StorageProvider
+from hub.core.tensor import create_tensor
+from typing import Callable, Dict, Optional, Union, Tuple, List, Sequence
+from hub.constants import DEFAULT_HTYPE, UNSPECIFIED
 import numpy as np
 
 from hub.api.tensor import Tensor
-from hub.constants import (
-    DEFAULT_MEMORY_CACHE_SIZE,
-    DEFAULT_LOCAL_CACHE_SIZE,
-    MB,
-)
-from hub.core.dataset import dataset_exists
+from hub.constants import DEFAULT_MEMORY_CACHE_SIZE, DEFAULT_LOCAL_CACHE_SIZE, MB
 
 from hub.core.meta.dataset_meta import DatasetMeta
-from hub.core.tensor import create_tensor, tensor_exists
 
-from hub.core.typing import StorageProvider
 from hub.core.index import Index
-from hub.integrations import dataset_to_pytorch, dataset_to_tensorflow
+from hub.integrations import dataset_to_tensorflow
+from hub.util.keys import dataset_exists, get_dataset_meta_key, tensor_exists
 from hub.util.bugout_reporter import hub_reporter
 from hub.util.cache_chain import generate_chain
 from hub.util.exceptions import (
@@ -80,9 +75,9 @@ class Dataset:
 
         # done instead of directly assigning read_only as backend might return read_only permissions
         if hasattr(base_storage, "read_only") and base_storage.read_only:
-            self.read_only = True
+            self._read_only = True
         else:
-            self.read_only = False
+            self._read_only = False
 
         # uniquely identifies dataset
         self.path = path or get_path_from_storage(base_storage)
@@ -96,12 +91,12 @@ class Dataset:
 
         self.tensors: Dict[str, Tensor] = {}
 
-        self.client = HubBackendClient(token=token)
         self._token = token
 
         if self.path.startswith("hub://"):
             split_path = self.path.split("/")
             self.org_id, self.ds_name = split_path[2], split_path[3]
+            self.client = HubBackendClient(token=token)
 
         self.public = public
         self._load_meta()
@@ -148,10 +143,8 @@ class Dataset:
         self,
         name: str,
         htype: str = DEFAULT_HTYPE,
-        chunk_size: int = None,
-        dtype: Union[str, np.dtype, type] = None,
-        sample_compression: str = None,
-        chunk_compression: str = None,
+        dtype: Union[str, np.dtype, type] = UNSPECIFIED,
+        sample_compression: str = UNSPECIFIED,
         **kwargs,
     ):
         """Creates a new tensor in the dataset.
@@ -163,12 +156,8 @@ class Dataset:
                 For example, `htype="image"` would have `dtype` default to `uint8`.
                 These defaults can be overridden by explicitly passing any of the other parameters to this function.
                 May also modify the defaults for other parameters.
-            chunk_size (int): Optionally override this tensor's `chunk_size`. In short, `chunk_size` determines the
-                size of files (chunks) being created to represent this tensor's samples.
-                For more on chunking, check out `hub.core.chunk_engine.chunker`.
             dtype (str): Optionally override this tensor's `dtype`. All subsequent samples are required to have this `dtype`.
-            sample_compression (str): Optionally override this tensor's `sample_compression`. Only used when the incoming data is uncompressed.
-            chunk_compression (str): Optionally override this tensor's `chunk_compression`. Currently not implemented.
+            sample_compression (str): All samples will be compressed in the provided format. If `None`, samples are uncompressed.
             **kwargs: `htype` defaults can be overridden by passing any of the compatible parameters.
                 To see all `htype`s and their correspondent arguments, check out `hub/htypes.py`.
 
@@ -180,24 +169,19 @@ class Dataset:
             NotImplementedError: If trying to override `chunk_compression`.
         """
 
-        if chunk_compression is not None:
-            # TODO: implement chunk compression + update docstring
-            raise NotImplementedError("Chunk compression is not implemented yet!")
-
         if tensor_exists(name, self.storage):
             raise TensorAlreadyExistsError(name)
 
+        self.meta.tensors.append(name)
         create_tensor(
             name,
             self.storage,
             htype=htype,
-            chunk_size=chunk_size,
             dtype=dtype,
             sample_compression=sample_compression,
-            chunk_compression=chunk_compression,
             **kwargs,
         )
-        tensor = Tensor(name, self.storage)
+        tensor = Tensor(name, self.storage)  # type: ignore
 
         self.tensors[name] = tensor
         self.meta.tensors.append(name)
@@ -223,53 +207,86 @@ class Dataset:
             yield self[i]
 
     def _load_meta(self):
+        meta_key = get_dataset_meta_key()
+
         if dataset_exists(self.storage):
-            logger.info(f"Hub Dataset {self.path} successfully loaded.")
-            self.meta = DatasetMeta.load(self.storage)
+            logger.info(f"{self.path} loaded successfully.")
+            self.meta = self.storage.get_cachable(meta_key, DatasetMeta)
+
             for tensor_name in self.meta.tensors:
                 self.tensors[tensor_name] = Tensor(tensor_name, self.storage)
+
         elif len(self.storage) > 0:
+            # dataset does not exist, but the path was not empty
             raise PathNotEmptyException
+
         else:
-            self.meta = DatasetMeta.create(self.storage)
+            self.meta = DatasetMeta()
+            self.storage[meta_key] = self.meta
+
             self.flush()
             if self.path.startswith("hub://"):
                 self.client.create_dataset_entry(
-                    self.org_id, self.ds_name, self.meta.to_dict(), public=self.public
+                    self.org_id, self.ds_name, self.meta.as_dict(), public=self.public
                 )
 
     @property
-    def mode(self):
-        return self._mode
+    def read_only(self):
+        return self._read_only
 
-    @mode.setter
-    def mode(self, new_mode):
-        if new_mode == "r":
+    @read_only.setter
+    def read_only(self, value: bool):
+        if value:
             self.storage.enable_readonly()
         else:
             self.storage.disable_readonly()
-        self._mode = new_mode
-
-    @property
-    def mode(self):
-        return self._mode
+        self._read_only = value
 
     @hub_reporter.record_call
-    def pytorch(self, transform: Optional[Callable] = None, workers: int = 1):
-        """Converts the dataset into a pytorch compatible format.
+    def pytorch(
+        self,
+        transform: Optional[Callable] = None,
+        tensors: Optional[Sequence[str]] = None,
+        num_workers: int = 1,
+        batch_size: Optional[int] = 1,
+        drop_last: Optional[bool] = False,
+        collate_fn: Optional[Callable] = None,
+        pin_memory: Optional[bool] = False,
+    ):
+        """Converts the dataset into a pytorch Dataloader.
 
         Note:
             Pytorch does not support uint16, uint32, uint64 dtypes. These are implicitly type casted to int32, int64 and int64 respectively.
-            This spins up it's own workers to fetch data, when using with torch.utils.data.DataLoader, set num_workers = 0 to avoid issues.
+            This spins up it's own workers to fetch data.
 
         Args:
-            transform (Callable, optional) : Transformation function to be applied to each sample
-            workers (int): The number of workers to use for fetching data in parallel.
+            transform (Callable, optional) : Transformation function to be applied to each sample.
+            tensors (List, optional): Optionally provide a list of tensor names in the ordering that your training script expects. For example, if you have a dataset that has "image" and "label" tensors, if `tensors=["image", "label"]`, your training script should expect each batch will be provided as a tuple of (image, label).
+            num_workers (int): The number of workers to use for fetching data in parallel.
+            batch_size (int, optional): Number of samples per batch to load. Default value is 1.
+            drop_last (bool, optional): Set to True to drop the last incomplete batch, if the dataset size is not divisible by the batch size.
+                If False and the size of dataset is not divisible by the batch size, then the last batch will be smaller. Default value is False.
+                Read torch.utils.data.DataLoader docs for more details.
+            collate_fn (Callable, optional): merges a list of samples to form a mini-batch of Tensor(s). Used when using batched loading from a map-style dataset.
+                Read torch.utils.data.DataLoader docs for more details.
+            pin_memory (bool, optional): If True, the data loader will copy Tensors into CUDA pinned memory before returning them. Default value is False.
+                Read torch.utils.data.DataLoader docs for more details.
 
         Returns:
-            A dataset object that can be passed to torch.utils.data.DataLoader
+            A torch.utils.data.DataLoader object.
         """
-        return dataset_to_pytorch(self, transform, workers=workers)
+        from hub.integrations import dataset_to_pytorch
+
+        return dataset_to_pytorch(
+            self,
+            transform,
+            tensors,
+            num_workers=num_workers,
+            batch_size=batch_size,
+            drop_last=drop_last,
+            collate_fn=collate_fn,
+            pin_memory=pin_memory,
+        )
 
     def _get_total_meta(self):
         """Returns tensor metas all together"""
@@ -360,6 +377,6 @@ class Dataset:
     @property
     def token(self):
         """Get attached token of the dataset"""
-        if self._token is None:
+        if self._token is None and self.path.startswith("hub://"):
             self._token = self.client.get_token()
         return self._token
