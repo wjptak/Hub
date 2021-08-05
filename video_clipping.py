@@ -10,12 +10,25 @@ def get_video_shape(video_path):
     return n, w, h  # TODO: return channels?
 
 
+def fourcc_from_video(src_path) -> str:
+    cap = cv2.VideoCapture(src_path)
+    fourcc = int(cap.get(cv2.CAP_PROP_FOURCC))
+    return chr(fourcc & 255), chr((fourcc >> 8) & 255), chr((fourcc >> 16) & 255), chr((fourcc >> 24) & 255)
+
+
 def video_writer_like(src_path, dest_path):
     cap = cv2.VideoCapture(src_path)
+    # print(cap.get(cv2.CAP_PROP_FOURCC))
+
+    fourcc = cv2.VideoWriter_fourcc(*'mp4v')
+    # fourcc = fourcc_from_video(src_path)
+    # fourcc = cv2.VideoWriter_fourcc(*fourcc)
+
     fps = cap.get(cv2.CAP_PROP_FPS)
     shape = get_video_shape(src_path)
-    fourcc = cv2.VideoWriter_fourcc(*'mp4v')
-    return cv2.VideoWriter(dest_path, fourcc, fps, shape[1:])
+    writer = cv2.VideoWriter(dest_path, fourcc, fps, shape[1:])
+    return writer
+
 
 
 # write a function that takes in a video and creates a new file with the first 10 seconds
@@ -45,4 +58,4 @@ def clip_video(src_path, dest_dir, frames_per_clip: int):
 
 
 print(get_video_shape("nasa.mp4"))
-clip_video("nasa.mp4", "OUTPUT_CLIPS", 500)
+clip_video("nasa.mp4", "OUTPUT_CLIPS", 18000)
