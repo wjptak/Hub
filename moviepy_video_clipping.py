@@ -5,7 +5,7 @@ def clip(src_path, dest_dir, seconds_per_clip: int):
     """Saves the video at `src_path` as clips of max length `seconds_per_clip` inside `dest_dir`."""
 
     video = VideoFileClip(src_path)
-    nclips = int(video.duration / seconds_per_clip)
+    nclips = max(1, int(video.duration / seconds_per_clip))
 
     print(f"breaking into {nclips} clips")
     for i in range(nclips):
@@ -26,5 +26,5 @@ def images(src_path, dest_dir):
     dest_path = os.path.join(dest_dir, "frame%04d.jpeg")
     video.write_images_sequence(dest_path)
 
-# clip("nasa.mp4", "OUTPUT_CLIPS", 90)
+# clip("nasa.mp4", "OUTPUT_CLIPS", 600)
 # images("nasa.mp4", "OUTPUT_FRAMES")
