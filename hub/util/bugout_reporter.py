@@ -91,7 +91,7 @@ hub_reporter = HumbugReporter(
     consent=consent,
     client_id=client_id,
     session_id=session_id,
-    bugout_token="f7176d62-73fa-4ecc-b24d-624364bddcb0",
+    bugout_token="124e00a8-a6b7-445f-8347-f61bca6e55df",
     tags=[],
 )
 
