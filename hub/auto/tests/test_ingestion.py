@@ -12,28 +12,25 @@ def test_ingestion_simple(memory_ds: Dataset):
         hub.ingest(
             src="tests_auto/invalid_path",
             dest=memory_ds.path,
-            dest_creds=None,
-            compression="jpeg",
+            images_compression="auto",
             overwrite=False,
         )
 
     with pytest.raises(SamePathException):
-        hub.ingest(
-            src=path, dest=path, dest_creds=None, compression="jpeg", overwrite=False
-        )
+        hub.ingest(src=path, dest=path, images_compression="jpeg", overwrite=False)
 
     ds = hub.ingest(
         src=path,
         dest=memory_ds.path,
-        dest_creds=None,
-        compression="jpeg",
+        images_compression="auto",
         overwrite=False,
     )
 
+    assert ds["images"].meta.sample_compression == "jpeg"
     assert list(ds.tensors.keys()) == ["images", "labels"]
-    assert ds.images.numpy().shape == (3, 200, 200, 3)
-    assert ds.labels.numpy().shape == (3,)
-    assert ds.labels.info.class_names == ("class0", "class1", "class2")
+    assert ds["images"].numpy().shape == (3, 200, 200, 3)
+    assert ds["labels"].numpy().shape == (3, 1)
+    assert ds["labels"].info.class_names == ("class0", "class1", "class2")
 
 
 def test_image_classification_sets(memory_ds: Dataset):
@@ -41,8 +38,7 @@ def test_image_classification_sets(memory_ds: Dataset):
     ds = hub.ingest(
         src=path,
         dest=memory_ds.path,
-        dest_creds=None,
-        compression="jpeg",
+        images_compression="auto",
         overwrite=False,
     )
 
@@ -52,12 +48,14 @@ def test_image_classification_sets(memory_ds: Dataset):
         "train/images",
         "train/labels",
     ]
+
+    assert ds["train/images"].meta.sample_compression == "jpeg"
     assert ds["test/images"].numpy().shape == (3, 200, 200, 3)
-    assert ds["test/labels"].numpy().shape == (3,)
+    assert ds["test/labels"].numpy().shape == (3, 1)
     assert ds["test/labels"].info.class_names == ("class0", "class1", "class2")
 
     assert ds["train/images"].numpy().shape == (3, 200, 200, 3)
-    assert ds["train/labels"].numpy().shape == (3,)
+    assert ds["train/labels"].numpy().shape == (3, 1)
     assert ds["train/labels"].info.class_names == ("class0", "class1", "class2")
 
 
@@ -67,12 +65,14 @@ def test_ingestion_exception(memory_ds: Dataset):
         hub.ingest(
             src="tests_auto/invalid_path",
             dest=memory_ds.path,
-            dest_creds=None,
-            compression="jpeg",
+            images_compression="auto",
             overwrite=False,
         )
 
     with pytest.raises(SamePathException):
         hub.ingest(
-            src=path, dest=path, dest_creds=None, compression="jpeg", overwrite=False
+            src=path,
+            dest=path,
+            images_compression="auto",
+            overwrite=False,
         )

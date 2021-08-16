@@ -19,9 +19,9 @@ We use [pytest](https://docs.pytest.org/en/6.2.x/) for our tests. In order to ma
 ### To install all dependencies run:
 
 ```
-pip3 install -r requirements/common.txt
-pip3 install -r requirements/plugins.txt
-pip3 install -r requirements/tests.txt
+pip3 install -r hub/requirements/common.txt
+pip3 install -r hub/requirements/plugins.txt
+pip3 install -r hub/requirements/tests.txt
 ```
 
 
@@ -29,6 +29,7 @@ pip3 install -r requirements/tests.txt
 - `pytest .`: Run all tests with memory only.
 - `pytest . --local`: Run all tests with memory and local.
 - `pytest . --s3`: Run all tests with memory and s3.
+- `pytest . --kaggle`: Run all tests with memory and kaggle.
 - `pytest . --memory-skip --hub-cloud`: Run all tests with hub cloud only.
 
 
