@@ -158,6 +158,14 @@ def flower_path():
 
 
 @pytest.fixture
+def space_video_path():
+    """Path to a video of space in the dummy data folder. Expected shape: (nframes=82, 640, 360, 3)"""
+    
+    path = get_dummy_data_path("videos")
+    return os.path.join(path, "space_short.mov")
+
+
+@pytest.fixture
 def compressed_image_paths():
     paths = {
         "webp": "beach.webp",
