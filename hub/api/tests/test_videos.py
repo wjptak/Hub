@@ -1,5 +1,4 @@
 from hub.core.dataset import Dataset
-import hub
 from hub.constants import KB
 import numpy as np
 from hub.tests.dataset_fixtures import enabled_datasets
