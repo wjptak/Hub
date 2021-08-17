@@ -140,6 +140,7 @@ def create_worker_chunk_engines(
             dtype=existing_meta.dtype,
             sample_compression=existing_meta.sample_compression,
             max_chunk_size=chunk_size,
+            chunk_compression=existing_meta.chunk_compression,
         )
         meta_key = get_tensor_meta_key(tensor)
         memory_cache[meta_key] = new_tensor_meta  # type: ignore
