@@ -23,7 +23,7 @@ Supported htypes and their respective defaults are:
 | image         |  uint8    |  png          |
 | class_label   |  uint32   |  none         |
 | bbox          |  float32  |  none         |
-| video         |  uint8    |  none         |
+| video         |  uint8    |  mp4          |
 | binary_mask   |  bool     |  none         |
 | segment_mask  |  int32    |  none         |
 
@@ -52,7 +52,7 @@ HTYPE_CONFIGURATIONS: Dict[str, Dict] = {
         "_info": ["class_names"],  # class_names should be stored in info, not meta
     },
     "bbox": {"dtype": "float32"},
-    "video": {"dtype": "uint8"},
+    "video": {"dtype": "uint8", "chunk_compression": "mp4"},
     "binary_mask": {
         "dtype": "bool"
     },  # TODO: pack numpy arrays to store bools as 1 bit instead of 1 byte
