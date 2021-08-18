@@ -1,3 +1,4 @@
+from hub.util.exceptions import CannotInferTilesError
 from hub.tests.common import MAX_INT_DTYPE
 import pytest
 from hub.tests.dataset_fixtures import enabled_persistent_dataset_generators
@@ -37,7 +38,6 @@ def test_initialize_large_samples(ds_generator, compression):
 def test_failures(memory_ds):
     memory_ds.create_tensor("tensor")
 
-    # TODO: exceptions.py
-    with pytest.raises(NotImplementedError):
+    with pytest.raises(CannotInferTilesError):
         # dtype must be pre-defined before an empty sample can be created (otherwise we can't infer the num chunks)
         memory_ds.tensor.append_empty((10, 10))

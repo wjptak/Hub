@@ -148,6 +148,16 @@ class Tensor:
         """
         self.extend([sample])
 
+    def append_empty(self, shape: Tuple[int]):
+        # TODO: docstring
+
+        raise NotImplementedError
+
+    def extend_empty(self, shape: Tuple[int]):
+        # TODO: docstring
+
+        raise NotImplementedError
+
     @property
     def meta(self):
         return self.chunk_engine.tensor_meta
