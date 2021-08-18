@@ -26,8 +26,12 @@ def approximate_num_bytes(shape, tensor_meta: TensorMeta) -> int:
     # check sample compression first. we don't support compressing both sample + chunk-wise at the same time, but in case we
     # do support this in the future, try both.
     if tensor_meta.sample_compression is not None:
-        num_bytes = _approximate_num_bytes_after_compressing(num_bytes, tensor_meta.sample_compression)
+        num_bytes = _approximate_num_bytes_after_compressing(
+            num_bytes, tensor_meta.sample_compression
+        )
     if tensor_meta.chunk_compression is not None:
-        num_bytes = _approximate_num_bytes_after_compressing(num_bytes, tensor_meta.chunk_compression)
+        num_bytes = _approximate_num_bytes_after_compressing(
+            num_bytes, tensor_meta.chunk_compression
+        )
 
     return num_bytes

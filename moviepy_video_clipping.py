@@ -10,10 +10,10 @@ def clip(src_path, dest_dir, seconds_per_clip: int):
     print(f"breaking into {nclips} clips")
     for i in range(nclips):
         print(f"creating clip {i}/{nclips}...")
-        dest_path = os.path.join(dest_dir, 'clip_{}.mp4'.format(i))
+        dest_path = os.path.join(dest_dir, "clip_{}.mp4".format(i))
 
         start = i * seconds_per_clip
-        end =  min((i + 1) * seconds_per_clip, video.duration)
+        end = min((i + 1) * seconds_per_clip, video.duration)
 
         sub = video.subclip(start, end)
         sub.write_videofile(dest_path)
@@ -25,6 +25,7 @@ def images(src_path, dest_dir):
     video = VideoFileClip(src_path)
     dest_path = os.path.join(dest_dir, "frame%04d.jpeg")
     video.write_images_sequence(dest_path)
+
 
 # clip("nasa.mp4", "OUTPUT_CLIPS", 600)
 # images("nasa.mp4", "OUTPUT_FRAMES")

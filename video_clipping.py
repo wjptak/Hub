@@ -13,14 +13,19 @@ def get_video_shape(video_path):
 def fourcc_from_video(src_path) -> str:
     cap = cv2.VideoCapture(src_path)
     fourcc = int(cap.get(cv2.CAP_PROP_FOURCC))
-    return chr(fourcc & 255), chr((fourcc >> 8) & 255), chr((fourcc >> 16) & 255), chr((fourcc >> 24) & 255)
+    return (
+        chr(fourcc & 255),
+        chr((fourcc >> 8) & 255),
+        chr((fourcc >> 16) & 255),
+        chr((fourcc >> 24) & 255),
+    )
 
 
 def video_writer_like(src_path, dest_path):
     cap = cv2.VideoCapture(src_path)
     # print(cap.get(cv2.CAP_PROP_FOURCC))
 
-    fourcc = cv2.VideoWriter_fourcc(*'mp4v')
+    fourcc = cv2.VideoWriter_fourcc(*"mp4v")
     # fourcc = fourcc_from_video(src_path)
     # fourcc = cv2.VideoWriter_fourcc(*fourcc)
 
@@ -28,7 +33,6 @@ def video_writer_like(src_path, dest_path):
     shape = get_video_shape(src_path)
     writer = cv2.VideoWriter(dest_path, fourcc, fps, shape[1:])
     return writer
-
 
 
 # write a function that takes in a video and creates a new file with the first 10 seconds
@@ -44,11 +48,11 @@ def clip_video(src_path, dest_dir, frames_per_clip: int):
     while success:
         if frame_count % frames_per_clip == 0:
             print(f"creating clip {clip_count} (frame {frame_count}/{shape[0]})...")
-            dest_path = os.path.join(dest_dir, 'clip_{}.mp4'.format(clip_count))
+            dest_path = os.path.join(dest_dir, "clip_{}.mp4".format(clip_count))
             out = video_writer_like(src_path, dest_path)
             clip_count += 1
             # if clip_count > 3:
-                # break
+            # break
 
         frame_count += 1
 

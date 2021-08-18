@@ -70,7 +70,9 @@ class TensorMeta(Meta):
         ffw_tensor_meta(self)
 
         if self.length > 0:
-            raise ValueError(f"Cannot set the dtype for a tensor with a length > 0. Length: {self.length}.")
+            raise ValueError(
+                f"Cannot set the dtype for a tensor with a length > 0. Length: {self.length}."
+            )
 
         self.dtype = dtype.name
 

@@ -535,6 +535,7 @@ class MemoryDatasetCanNotBePickledError(Exception):
 class TilingError(Exception):
     pass
 
+
 class CannotInferTilesError(TilingError):
     def __init__(self, reason):
         super().__init__(reason)

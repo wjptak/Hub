@@ -9,7 +9,11 @@ from hub.core.meta.encode.shape import ShapeEncoder
 from hub.core.meta.encode.byte_positions import BytePositionsEncoder
 
 from hub.core.serialize import serialize_chunk, deserialize_chunk, infer_chunk_num_bytes
-from hub.core.compression import compress_multiple, decompress_array, decompress_multiple
+from hub.core.compression import (
+    compress_multiple,
+    decompress_array,
+    decompress_multiple,
+)
 
 import lz4.frame
 
