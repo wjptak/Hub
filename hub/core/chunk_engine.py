@@ -411,9 +411,17 @@ class ChunkEngine:
         self._synchronize_cache()
         self.cache.maybe_flush()
 
-    def append(self, sample: SampleValue):
-        """Formats a single `sample` (compresseses/decompresses if applicable) and feeds it into `_append_bytes`."""
-        self.extend([sample])
+    def extend_empty(self, shape: Tuple[int]):
+        # TODO: docstring
+
+        self.cache.check_readonly()
+        ffw_chunk_id_encoder(self.chunk_id_encoder)
+
+        # TODO: infer num bytes / num chunks
+        # TODO: if can fit in the active chunk, just create a np.zeros array and add it as a normal sample
+        # TODO: if not, we need to tile
+
+        raise NotImplementedError
 
     def update(self, index: Index, samples: Union[Sequence[SampleValue], SampleValue]):
         """Update data at `index` with `samples`."""
