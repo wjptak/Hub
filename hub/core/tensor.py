@@ -92,6 +92,10 @@ class Tensor:
         """Extends the end of the tensor by appending multiple elements from a sequence. Accepts a sequence, a single batched numpy array,
         or a sequence of `hub.read` outputs, which can be used to load files. See examples down below.
 
+        Note:
+            If the samples are larger than what can fit into memory, you should first initialize your samples using `extend_empty`
+            and add it slice by slice.
+
         Example:
             numpy input:
                 >>> len(tensor)
@@ -128,6 +132,10 @@ class Tensor:
         """Appends a single sample to the end of the tensor. Can be an array, scalar value, or the return value from `hub.read`,
         which can be used to load files. See examples down below.
 
+        Note:
+            If the sample is larger than what can fit into memory, you should first initialize your sample using `append_empty`
+            and add it slice by slice.
+
         Examples:
             numpy input:
                 >>> len(tensor)
@@ -149,12 +157,45 @@ class Tensor:
         self.extend([sample])
 
     def append_empty(self, shape: Tuple[int]):
-        # TODO: docstring
+        """Appends a single empty sample with the given shape to the end of the tensor. Use this when your sample is too large for memory.
+
+        Examples:
+            >>> len(ds.tensor)
+            0
+            >>> ds.tensor.append_empty((10000, 10000))
+            >>> ds.shape
+            (1, 10000, 10000)
+            >>> ds.tensor[0, 1000, 5000].numpy()
+            np.ndarray(0)
+            >>> ds.tensor[0, 1000:1050, 5000:5050] = np.ones((50, 50))
+            >>> ds.tensor[0, 1000, 5000].numpy()
+            np.ndarray(1)
+
+        Args:
+            shape (Tuple[int]): Shape of the sample.
+        """
+
 
         raise NotImplementedError
 
     def extend_empty(self, shape: Tuple[int]):
-        # TODO: docstring
+        """Extends multiple empty samples with the given shape to the end of the tensor. Use this when your samples are too large for memory.
+
+        Examples:
+            >>> len(ds.tensor)
+            0
+            >>> ds.tensor.extend_empty((5, 10000, 10000))
+            >>> ds.shape
+            (5, 10000, 10000)
+            >>> ds.tensor[0:5, 1000, 5000].numpy()
+            np.ndarray([0, 0, 0, 0, 0])
+            >>> ds.tensor[0:5, 1000:1050, 5000:5050] = np.ones((50, 50))
+            >>> ds.tensor[0:5, 1000, 5000].numpy()
+            np.ndarray([1, 1, 1, 1, 1])
+
+        Args:
+            shape (Tuple[int]): Shape of the sample.
+        """
 
         raise NotImplementedError
 
