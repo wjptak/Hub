@@ -1,3 +1,4 @@
+from hub.core.fast_forwarding import ffw_tensor_meta
 import numpy as np
 from typing import List, Sequence, Union, Optional, Tuple, Any
 from functools import reduce
@@ -228,6 +229,14 @@ class Tensor:
         if self.meta.dtype:
             return np.dtype(self.meta.dtype)
         return None
+
+    def set_dtype(self, new_dtype: Union[str, np.dtype]):
+        """Set the dtype for this tensor. This can only be done when no samples exist yet!"""
+
+        self.storage.check_readonly()
+        ffw_tensor_meta(self.meta)
+        self.meta.set_dtype(np.dtype(new_dtype))
+        self.storage.maybe_flush()
 
     @property
     def shape_interval(self) -> ShapeInterval:

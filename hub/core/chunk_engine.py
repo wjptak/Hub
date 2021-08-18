@@ -5,6 +5,7 @@ from hub.core.compression import decompress_array
 from math import ceil
 from typing import Any, Optional, Sequence, Union, Tuple, List, Set
 from hub.util.exceptions import (
+    CannotInferTilesError,
     CorruptedMetaError,
     DynamicTensorNumpyError,
 )
@@ -416,6 +417,10 @@ class ChunkEngine:
 
         self.cache.check_readonly()
         ffw_chunk_id_encoder(self.chunk_id_encoder)
+
+        tensor_meta = self.tensor_meta
+        if tensor_meta.dtype is None:
+            raise CannotInferTilesError("Cannot add an empty sample to a tensor with dtype=None. Either add a real sample, or use `tensor.set_dtype(...)` first.")
 
         # TODO: infer num bytes / num chunks
         # TODO: if can fit in the active chunk, just create a np.zeros array and add it as a normal sample

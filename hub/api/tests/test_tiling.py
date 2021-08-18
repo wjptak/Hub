@@ -40,4 +40,10 @@ def test_failures(memory_ds):
 
     with pytest.raises(CannotInferTilesError):
         # dtype must be pre-defined before an empty sample can be created (otherwise we can't infer the num chunks)
-        memory_ds.tensor.append_empty((10, 10))
+        memory_ds.tensor.append_empty((10000, 10000))
+    assert memory_ds.tensor.shape == (0,)
+
+    # fix
+    memory_ds.tensor.set_dtype("uint8")
+    memory_ds.tensor.append_empty((10000, 10000))
+    assert memory_ds.tensor.shape == (1, 10000, 10000)

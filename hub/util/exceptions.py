@@ -537,4 +537,4 @@ class TilingError(Exception):
 
 class CannotInferTilesError(TilingError):
     def __init__(self, reason):
-        pass  # TODO!!!!!
+        super().__init__(reason)
