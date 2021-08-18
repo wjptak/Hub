@@ -9,7 +9,7 @@ from hub.core.meta.encode.shape import ShapeEncoder
 from hub.core.meta.encode.byte_positions import BytePositionsEncoder
 
 from hub.core.serialize import serialize_chunk, deserialize_chunk, infer_chunk_num_bytes
-from hub.core.compression import compress_multiple, decompress_multiple
+from hub.core.compression import compress_multiple, decompress_array, decompress_multiple
 
 import lz4.frame
 
@@ -129,14 +129,17 @@ class Chunk(Cachable):
         nbytes: Sequence[int],
     ):
         """Store `buffer` in this chunk.
+
         Args:
             buffer (memoryview): Buffer that represents multiple samples of same shape
             max_data_bytes (int): Used to determine if this chunk has space for `buffer`.
             shapes (Sequence[Tuple[int]]): Shape for each sample
             nbytes (Sequence[int]): Number of bytes in each sample
+
         Raises:
             FullChunkError: If `buffer` is too large.
         """
+
         incoming_num_bytes = len(buffer)
 
         if not self.has_space_for(incoming_num_bytes, max_data_bytes):
