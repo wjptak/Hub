@@ -1,3 +1,4 @@
+from hub.util.tiles import approximate_num_bytes
 from hub.core.fast_forwarding import ffw_chunk_id_encoder
 import warnings
 from hub.util.casting import get_dtype
@@ -422,7 +423,9 @@ class ChunkEngine:
         if tensor_meta.dtype is None:
             raise CannotInferTilesError("Cannot add an empty sample to a tensor with dtype=None. Either add a real sample, or use `tensor.set_dtype(...)` first.")
 
-        # TODO: infer num bytes / num chunks
+        num_bytes = approximate_num_bytes(shape, tensor_meta)
+        print(num_bytes)
+
         # TODO: if can fit in the active chunk, just create a np.zeros array and add it as a normal sample
         # TODO: if not, we need to tile
 
