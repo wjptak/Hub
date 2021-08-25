@@ -35,7 +35,6 @@ class GCSProvider(StorageProvider):
 
     def _initialize_provider(self):
         self._set_bucket_and_path()
-        # self.fs = gcsfs.GCSFileSystem(token=self.token)
         from google.oauth2 import service_account
 
         credentials = service_account.Credentials.from_service_account_file(self.token)
@@ -64,15 +63,11 @@ class GCSProvider(StorageProvider):
         """Remove all keys below root - empties out mapping"""
         self.check_readonly()
         blob_objects = self.client_bucket.list_blobs(prefix=self.path)
-
-        for obj in blob_objects:
-            obj.delete()
+        self.client_bucket.delete_blobs(blob_objects)
 
     def __getitem__(self, key):
         """Retrieve data"""
         try:
-            # with self.fs.open(posixpath.join(self.path, key), "rb") as f:
-            #     return f.read()
             blob = self.client_bucket.get_blob(self._get_path_from_key(key))
             return blob.download_as_bytes()
         except self.missing_exceptions:
@@ -82,8 +77,11 @@ class GCSProvider(StorageProvider):
         """Store value in key"""
         self.check_readonly()
         blob = self.client_bucket.blob(self._get_path_from_key(key))
-        with blob.open("wb") as f:
-            f.write(value)
+        if isinstance(value, memoryview):
+            value = value.tobytes()
+        blob.upload_from_string(
+            value,
+        )
 
     def __iter__(self):
         """Iterating over the structure"""
@@ -101,5 +99,7 @@ class GCSProvider(StorageProvider):
 
     def __contains__(self, key):
         """Does key exist in mapping?"""
-        path = posixpath.join(self.path, key)
-        return self.fs.exists(path)
+        stats = storage.Blob(
+            bucket=self.client_bucket, name=self._get_path_from_key(key)
+        ).exists(self.client)
+        return stats
