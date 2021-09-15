@@ -76,8 +76,8 @@ class Lock(object):
                     self.storage[
                         hub.constants.DATASET_LOCK_FILENAME
                     ] = self._get_lock_bytes()
-                except Exception:
-                    pass
+                except Exception as e:
+                    print(e)
                 time.sleep(hub.constants.DATASET_LOCK_UPDATE_INTERVAL)
         except Exception:  # Thread termination
             return
