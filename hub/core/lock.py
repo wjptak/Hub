@@ -42,6 +42,7 @@ class Lock(object):
         self._previous_update_timestamp = None
         self.acquire()
         atexit.register(self.release)
+        self._errs = []
 
     def _get_lock_bytes(self) -> bytes:
         return uuid.getnode().to_bytes(6, "little") + struct.pack("d", time.time())
@@ -77,7 +78,7 @@ class Lock(object):
                         hub.constants.DATASET_LOCK_FILENAME
                     ] = self._get_lock_bytes()
                 except Exception as e:
-                    print(e)
+                    self._errs.append(e)
                 time.sleep(hub.constants.DATASET_LOCK_UPDATE_INTERVAL)
         except Exception:  # Thread termination
             return
