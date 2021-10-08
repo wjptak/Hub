@@ -171,6 +171,7 @@ commands:
           environment:
             BUGGER_OFF: "true"
           command: |
+          
             pip3 install --upgrade pip --user
             pip3 install --upgrade setuptools
             pip3 install -r hub/requirements/tests.txt
