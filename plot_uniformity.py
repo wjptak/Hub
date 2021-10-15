@@ -60,13 +60,14 @@ def plot_uniformity(dataset_lengths: List[int], shuffle_cache_sizes: List[int], 
             ratios_for_shuffle_cache_size.append(mean_ratio)
 
             if verbose:
-                print(f"N={num_samples}, cache_bytes={shuffle_cache_size}, mean_ratio={mean_ratio}")
+                print(f"num_samples={num_samples}, cache_bytes={shuffle_cache_size}, mean_ratio={mean_ratio}")
 
         ax.plot(dataset_lengths, ratios_for_shuffle_cache_size, label=f"cache_bytes={shuffle_cache_size}")
 
     # ax.hlines(0.5, 0, max(dataset_lengths), linestyles="dashed", label="target (uniformly random)")
 
-    ax.set_title(f"hub pytorch shuffle=True uniformity averaged over {epochs} epochs")
+    # TODO: if doing multiple tensors, update title
+    ax.set_title(f"hub pytorch shuffle=True uniformity averaged over {epochs} epochs (single tensor)")
     ax.set_ylabel("uniformity (0.5=uniform, 1=non-random)")
     ax.set_xlabel("# of samples")
 
@@ -77,11 +78,12 @@ if __name__ == "__main__":
     epochs = 10
     epoch_averaging = False
 
-    cache_sizes = [1 * KB, 1 * MB, 8 * MB, 16 * MB] # , 32 * MB, 64 * MB]
+    cache_sizes = [1 * KB, 16 * MB]
+    # cache_sizes = [1 * KB, 1 * MB, 8 * MB, 16 * MB] # , 32 * MB, 64 * MB]
     # cache_sizes = [16 * MB]
 
     plot_uniformity(
-        np.linspace(100, 1000, num=10, dtype=int), 
+        np.linspace(100, 10_000, num=20, dtype=int), 
         cache_sizes, 
         epochs, 
         verbose=True,
