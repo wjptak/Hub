@@ -2,6 +2,7 @@
 ##############
 
 datasets
+plot_uniformity_dataset_*
 
 PYTEST_TMPDIR
 .coverage

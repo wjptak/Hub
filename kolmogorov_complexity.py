@@ -14,7 +14,7 @@ def kolmogorov_complexity_ratio(indices):
     Warns when the incoming data is not index-like (sequence of integers in the range [0, len(X) - 1] 
     optionally shuffled).
 
-    Outputs are between 0-1. Uniformly random data is close
+    Outputs are between 0-1. Uniformly random data is close to 0.5 and non-random data is close to 1.
     """
 
     indices = np.asarray(indices)
