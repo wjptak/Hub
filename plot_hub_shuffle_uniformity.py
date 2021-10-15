@@ -82,6 +82,8 @@ if __name__ == "__main__":
     # cache_sizes = [1 * KB, 1 * MB, 8 * MB, 16 * MB] # , 32 * MB, 64 * MB]
     # cache_sizes = [16 * MB]
 
+    # TODO: compare to normal pytorch shuffling
+
     plot_uniformity(
         np.linspace(100, 10_000, num=20, dtype=int), 
         cache_sizes, 
