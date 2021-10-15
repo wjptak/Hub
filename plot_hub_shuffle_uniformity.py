@@ -41,7 +41,7 @@ def _get_indices(dataset_length: int, max_num_samples: int, shuffle_cache_size: 
         cache.indices_history.clear()
     return history
 
-def plot_uniformity(dataset_lengths: List[int], shuffle_cache_sizes: List[int], epochs: int, verbose=False):
+def plot_uniformity(title: str, dataset_lengths: List[int], shuffle_cache_sizes: List[int], epochs: int, indices_func, verbose=False):
     
     fig, ax = plt.subplots()
 
@@ -54,7 +54,7 @@ def plot_uniformity(dataset_lengths: List[int], shuffle_cache_sizes: List[int], 
 
             ratios = []
             for _ in range(epochs):
-                indices_history = _get_indices(num_samples, max(dataset_lengths), shuffle_cache_size, clear_history=True)
+                indices_history = indices_func(num_samples, max(dataset_lengths), shuffle_cache_size, clear_history=True)
                 ratios.append(kolmogorov_complexity_ratio(indices_history))
             mean_ratio = np.mean(ratios)
             ratios_for_shuffle_cache_size.append(mean_ratio)
@@ -67,16 +67,15 @@ def plot_uniformity(dataset_lengths: List[int], shuffle_cache_sizes: List[int], 
     # ax.hlines(0.5, 0, max(dataset_lengths), linestyles="dashed", label="target (uniformly random)")
 
     # TODO: if doing multiple tensors, update title
-    ax.set_title(f"hub pytorch shuffle=True uniformity averaged over {epochs} epochs (single tensor)")
+    ax.set_title(title)
     ax.set_ylabel("uniformity (0.5=uniform, 1=non-random)")
     ax.set_xlabel("# of samples")
 
     ax.legend()
     plt.show()
 
-if __name__ == "__main__":
+def main(title_prefix: str, indices_func=_get_indices):
     epochs = 10
-    epoch_averaging = False
 
     cache_sizes = [1 * KB, 16 * MB]
     # cache_sizes = [1 * KB, 1 * MB, 8 * MB, 16 * MB] # , 32 * MB, 64 * MB]
@@ -85,8 +84,14 @@ if __name__ == "__main__":
     # TODO: compare to normal pytorch shuffling
 
     plot_uniformity(
+        f"{title_prefix} averaged over {epochs} epochs (single tensor)",
         np.linspace(100, 10_000, num=20, dtype=int), 
         cache_sizes, 
-        epochs, 
+        epochs,
+        indices_func,
         verbose=True,
     )
+
+
+if __name__ == "__main__":
+    main("hub pytorch shuffle=True uniformity")
