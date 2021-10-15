@@ -41,7 +41,7 @@ def _get_indices(dataset_length: int, max_num_samples: int, shuffle_cache_size: 
         cache.indices_history.clear()
     return history
 
-def plot_uniformity(title: str, dataset_lengths: List[int], shuffle_cache_sizes: List[int], epochs: int, indices_func, verbose=False):
+def plot_uniformity(title: str, dataset_lengths: List[int], shuffle_cache_sizes: List[int], epochs: int, indices_func, epoch_averaging: bool, verbose=False):
     
     fig, ax = plt.subplots()
 
@@ -53,9 +53,17 @@ def plot_uniformity(title: str, dataset_lengths: List[int], shuffle_cache_sizes:
             # a ratio closer to 1 means the data is non-random
 
             ratios = []
+
+            total_indices_history = []
             for _ in range(epochs):
-                indices_history = indices_func(num_samples, max(dataset_lengths), shuffle_cache_size, clear_history=True)
-                ratios.append(kolmogorov_complexity_ratio(indices_history))
+                indices_history = indices_func(num_samples, max(dataset_lengths), shuffle_cache_size, clear_history=epoch_averaging)
+                total_indices_history.extend(indices_history)
+
+                if epoch_averaging:
+                    ratios.append(kolmogorov_complexity_ratio(indices_history))
+            if not epoch_averaging:
+                ratios.append(kolmogorov_complexity_ratio(total_indices_history))
+
             mean_ratio = np.mean(ratios)
             ratios_for_shuffle_cache_size.append(mean_ratio)
 
@@ -74,10 +82,14 @@ def plot_uniformity(title: str, dataset_lengths: List[int], shuffle_cache_sizes:
     ax.legend()
     plt.show()
 
-def main(title_prefix: str, indices_func=_get_indices):
+def main(title_prefix: str, indices_func=_get_indices, is_hub: bool=True):
     epochs = 10
+    epoch_averaging = False
 
-    cache_sizes = [1 * KB, 16 * MB]
+    if is_hub:
+        cache_sizes = [1 * KB, 16 * MB]
+    else:
+        cache_sizes = [None]
     # cache_sizes = [1 * KB, 1 * MB, 8 * MB, 16 * MB] # , 32 * MB, 64 * MB]
     # cache_sizes = [16 * MB]
 
@@ -89,6 +101,7 @@ def main(title_prefix: str, indices_func=_get_indices):
         cache_sizes, 
         epochs,
         indices_func,
+        epoch_averaging=epoch_averaging,
         verbose=True,
     )
 
