@@ -42,6 +42,9 @@ class ShuffleLRUCache(PrefetchLRUCache):
         # stores the start and end index of each chunk for each tensor
         self.all_chunks_start_end_index = self._get_all_chunks_start_end_index()
 
+        # stores all indices in the order that were used
+        self.indices_history = []
+
     def remove_index(self, index: int):
         """Removes an index from all the class data structures after it has been used."""
         self.all_remaining_indexes.discard(index)
@@ -70,6 +73,7 @@ class ShuffleLRUCache(PrefetchLRUCache):
             largest_ct = max(self.ct_indexes.keys())
             index = random.choice(list(self.ct_indexes[largest_ct]))
         self.remove_index(index)
+        self.indices_history.append(index)
         return index
 
     def _update_count_dicts_insertion(self, tensor, chunk_name):
