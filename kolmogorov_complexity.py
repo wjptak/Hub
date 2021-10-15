@@ -20,11 +20,11 @@ def kolmogorov_complexity_ratio(indices):
     indices = np.asarray(indices)
 
     if DO_WARNINGS:
-        if indices.size > 0:
+        if indices.size == 0:
             w.warn(f"No indices were present.")
         if min(indices) != 0:
             w.warn(f"Indices list min was expected to be 0, but instead it is {min(indices)}.")
-        if list(sorted(indices)) != np.arange(max(indices)):
+        if not np.array_equal(list(sorted(indices)), np.arange(max(indices) + 1)):
             w.warn(f"Indices do not include all values from 0-N.")
 
     incoming_distribution = np.diff(indices)
