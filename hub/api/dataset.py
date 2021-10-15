@@ -206,6 +206,18 @@ class dataset:
         )
 
     @staticmethod
+    def exists(path: str) -> bool:
+        """Returns `True` if a dataset exists at `path`."""
+
+        try:
+            hub.load(path)
+            return True
+        except:
+            pass
+
+        return False
+
+    @staticmethod
     def delete(path: str, force: bool = False, large_ok: bool = False) -> None:
         """Deletes a dataset at a given path.
         This is an IRREVERSIBLE operation. Data once deleted can not be recovered.

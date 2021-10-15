@@ -30,6 +30,7 @@ compressions = list(SUPPORTED_COMPRESSIONS)
 htypes = sorted(list(HTYPE_CONFIGURATIONS))
 list = dataset.list
 load = dataset.load
+exists = dataset.exists
 empty = dataset.empty
 like = dataset.like
 list = dataset.list
@@ -44,6 +45,7 @@ __all__ = [
     "read",
     "__version__",
     "load",
+    "exists",
     "empty",
     "compute",
     "compose",
