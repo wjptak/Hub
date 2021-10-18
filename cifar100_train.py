@@ -25,6 +25,8 @@ LEARNING_RATE = 0.001
 DEVICE = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 WORKERS = 2
 
+NORM_STATS = ((0.507, 0.487, 0.441), (0.267, 0.256, 0.276))
+
 def get_model():
     model = torchvision.models.resnet50(pretrained=True)
 
@@ -83,16 +85,17 @@ def test(model, loader):
     return correct / total
 
 
-stats = ((0.507, 0.487, 0.441), (0.267, 0.256, 0.276))
-train_tfs = tt.Compose([tt.RandomCrop(32, padding=4, padding_mode='reflect'), 
-                         tt.RandomHorizontalFlip(), 
-                         tt.ToTensor(), 
-                         tt.Normalize(*stats,inplace=True)])
-test_tfs = tt.Compose([tt.ToTensor(), tt.Normalize(*stats)])
+
 
 
 @ray.remote
 def train_cifar_torchvision(train_shuffle: bool=True) -> float:
+    train_tfs = tt.Compose([tt.RandomCrop(32, padding=4, padding_mode='reflect'), 
+                             tt.RandomHorizontalFlip(), 
+                             tt.ToTensor(), 
+                             tt.Normalize(*NORM_STATS,inplace=True)])
+    test_tfs = tt.Compose([tt.ToTensor(), tt.Normalize(*NORM_STATS)])
+
     train_dataset = TORCHVISION_DATA_CLASS(TORCHVISION_DATA_DIRECTORY, train=True, download=True, transform=train_tfs)
     test_dataset = TORCHVISION_DATA_CLASS(TORCHVISION_DATA_DIRECTORY, train=False, download=True, transform=test_tfs)
 
@@ -109,18 +112,22 @@ def train_cifar_hub(train_shuffle: bool=True) -> float:
     train_dataset = hub.load(HUB_TRAIN_URI)
     test_dataset = hub.load(HUB_TEST_URI)
 
-    # train_dataset = torchvision.datasets.CIFAR100(TORCHVISION_CIFAR, train=True, download=True, transform=train_tfs)
-    # test_dataset = torchvision.datasets.CIFAR100(TORCHVISION_CIFAR, train=False, download=True, transform=test_tfs)
+    train_tfs = tt.Compose([tt.RandomCrop(32, padding=4, padding_mode='reflect'), 
+                             tt.RandomHorizontalFlip(), 
+                             tt.Normalize(*NORM_STATS,inplace=True)])
+    test_tfs = tt.Compose([tt.Normalize(*NORM_STATS)])
 
     def hub_train_tfs(sample):
         image, label = sample["images"], sample["fine_labels"]
         image = train_tfs(image)
+        image = image.permute(2, 0, 1)
         label = torch.tensor(label)
         return image, label
 
     def hub_test_tfs(sample):
         image, label = sample["images"], sample["fine_labels"]
         image = test_tfs(image)
+        image = image.permute(2, 0, 1)
         label = torch.tensor(label)
         return image, label
 
