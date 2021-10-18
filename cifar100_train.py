@@ -11,7 +11,13 @@ from tqdm import tqdm
 # stole hyperparameters from:
 # https://blog.jovian.ai/classifying-cifar-100-with-resnet-5860a9c2c13f
 
-TORCHVISION_CIFAR = "./tv_cifar"
+# define torchvision dataset
+TORCHVISION_DATA_DIRECTORY = "./torchvision_dataset"
+TORCHVISION_DATA_CLASS = torchvision.datasets.CIFAR100
+
+# define hub dataset
+HUB_TRAIN_URI = "hub://activeloop/cifar100-train"
+HUB_TEST_URI = "hub://activeloop/cifar100-test"
 
 EPOCHS = 10
 BATCH_SIZE = 128
@@ -87,8 +93,8 @@ test_tfs = tt.Compose([tt.ToTensor(), tt.Normalize(*stats)])
 
 @ray.remote
 def train_cifar_torchvision(train_shuffle: bool=True) -> float:
-    train_dataset = torchvision.datasets.CIFAR100(TORCHVISION_CIFAR, train=True, download=True, transform=train_tfs)
-    test_dataset = torchvision.datasets.CIFAR100(TORCHVISION_CIFAR, train=False, download=True, transform=test_tfs)
+    train_dataset = TORCHVISION_DATA_CLASS(TORCHVISION_DATA_DIRECTORY, train=True, download=True, transform=train_tfs)
+    test_dataset = TORCHVISION_DATA_CLASS(TORCHVISION_DATA_DIRECTORY, train=False, download=True, transform=test_tfs)
 
     train_loader = torch.utils.data.DataLoader(train_dataset, batch_size=BATCH_SIZE, shuffle=train_shuffle, num_workers=WORKERS)
     test_loader = torch.utils.data.DataLoader(test_dataset, batch_size=BATCH_SIZE, shuffle=False, num_workers=WORKERS)
@@ -100,20 +106,20 @@ def train_cifar_torchvision(train_shuffle: bool=True) -> float:
 
 @ray.remote
 def train_cifar_hub(train_shuffle: bool=True) -> float:
-    train_dataset = hub.load("hub://activeloop/cifar100-train")
-    test_dataset = hub.load("hub://activeloop/cifar100-test")
+    train_dataset = hub.load(HUB_TRAIN_URI)
+    test_dataset = hub.load(HUB_TEST_URI)
 
     # train_dataset = torchvision.datasets.CIFAR100(TORCHVISION_CIFAR, train=True, download=True, transform=train_tfs)
     # test_dataset = torchvision.datasets.CIFAR100(TORCHVISION_CIFAR, train=False, download=True, transform=test_tfs)
 
     def hub_train_tfs(sample):
-        image, label = sample
+        image, label = sample["images"], sample["fine_labels"]
         image = train_tfs(image)
         label = torch.tensor(label)
         return image, label
 
     def hub_test_tfs(sample):
-        image, label = sample
+        image, label = sample["images"], sample["fine_labels"]
         image = test_tfs(image)
         label = torch.tensor(label)
         return image, label
