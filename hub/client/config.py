@@ -1,4 +1,7 @@
 import os
+import ast
+
+from hub.constants import ENV_DEV_MODE, ENV_LOCAL_MODE
 
 TOKEN_FILE_PATH = os.path.expanduser("~/.activeloop/token")
 REPORTING_CONFIG_FILE_PATH = os.path.expanduser("~/.activeloop/reporting_config.json")
@@ -6,8 +9,14 @@ REPORTING_CONFIG_FILE_PATH = os.path.expanduser("~/.activeloop/reporting_config.
 HUB_REST_ENDPOINT = "https://app.activeloop.ai"
 HUB_REST_ENDPOINT_DEV = "https://app.dev.activeloop.ai"
 HUB_REST_ENDPOINT_LOCAL = "http://localhost:5000"
-USE_LOCAL_HOST = False
-USE_DEV_ENVIRONMENT = False
+
+def set_dev(value):
+    os.environ[ENV_DEV_MODE] = str(value)
+def is_dev() -> bool:
+    return ast.literal_eval(os.environ.get(ENV_DEV_MODE, "False"))
+def is_local() -> bool:
+    return ast.literal_eval(os.environ.get(ENV_LOCAL_MODE, "False"))
+
 
 GET_TOKEN_SUFFIX = "/api/user/token"
 REGISTER_USER_SUFFIX = "/api/user/register"

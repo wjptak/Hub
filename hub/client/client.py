@@ -16,6 +16,8 @@ from hub.client.config import (
     LIST_DATASETS,
     GET_USER_PROFILE,
     UPDATE_SUFFIX,
+    is_dev,
+    is_local,
 )
 from hub.client.log import logger
 
@@ -110,9 +112,9 @@ class HubBackendClient:
         return response
 
     def endpoint(self):
-        if hub.client.config.USE_LOCAL_HOST:
+        if is_local():
             return HUB_REST_ENDPOINT_LOCAL
-        if hub.client.config.USE_DEV_ENVIRONMENT:
+        if is_dev():
             return HUB_REST_ENDPOINT_DEV
 
         return HUB_REST_ENDPOINT
@@ -130,6 +132,7 @@ class HubBackendClient:
         Raises:
             LoginException: If there is an issue retrieving the auth token.
         """
+        
         json = {"username": username, "password": password}
         response = self.request("GET", GET_TOKEN_SUFFIX, json=json)
 

@@ -1,6 +1,6 @@
 import textwrap
 
-from hub.client.config import HUB_REST_ENDPOINT
+from hub.client.config import HUB_REST_ENDPOINT, set_dev
 import click
 from humbug.report import Report
 
@@ -14,13 +14,21 @@ from hub.util.bugout_reporter import (
 from hub.util.exceptions import AuthenticationException
 
 
+dev_command = click.option("--dev", "-d", is_flag=True, default=False, help="Use the development endpoint")
+
+
 @click.command()
 @click.option("--username", "-u", default=None, help="Your Activeloop Username")
 @click.option("--password", "-p", default=None, help="Your Activeloop Password")
-def login(username: str, password: str):
+@dev_command
+def login(username: str, password: str, dev: bool):
     """Log in to Activeloop"""
+
+    set_dev(dev)
+    name = "Activeloop (DEV)" if dev else "Activeloop"
+
     if not username:
-        click.echo("Login to Activeloop using your credentials.")
+        click.echo(f"Login to {name} using your credentials.")
         click.echo(
             "If you don't have an account, register by using the 'activeloop register' command or by going to "
             f"{HUB_REST_ENDPOINT}/register."
@@ -37,7 +45,7 @@ def login(username: str, password: str):
         client = HubBackendClient()
         token = client.request_auth_token(username, password)
         write_token(token)
-        click.echo("Successfully logged in to Activeloop.")
+        click.echo(f"Successfully logged in to {name}.")
         reporting_config = get_reporting_config()
         if reporting_config.get("username") != username:
             save_reporting_config(True, username=username)
@@ -72,9 +80,14 @@ def reporting(on):
 @click.option("--username", "-u", default=None, help="Your Activeloop Username")
 @click.option("--email", "-e", default=None, help="Your Email")
 @click.option("--password", "-p", default=None, help="Your Activeloop Password")
-def register(username: str, email: str, password: str):
+@dev_command
+def register(username: str, email: str, password: str, dev):
     """Create a new Activeloop user account"""
-    click.echo("Thank you for registering for an Activeloop account!")
+    
+    set_dev(dev)
+    name = "Activeloop (DEV)" if dev else "Activeloop"
+    click.echo(f"Thank you for registering for an {name} account!")
+    
     if not username:
         click.echo(
             "Enter your details. Your password must be atleast 6 characters long."
@@ -100,7 +113,7 @@ def register(username: str, email: str, password: str):
         token = client.request_auth_token(username, password)
         write_token(token)
         click.echo(
-            f"Successfully registered and logged in to Activeloop as {username}."
+            f"Successfully registered and logged in to {name} as {username}."
         )
         consent_message = textwrap.dedent(
             """

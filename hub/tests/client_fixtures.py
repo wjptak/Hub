@@ -1,5 +1,7 @@
+import hub
+from hub.client.config import is_dev, set_dev
 from hub.constants import (
-    HUB_CLOUD_DEV_USERNAME,
+    ENV_HUB_DEV_USERNAME,
     HUB_CLOUD_OPT,
     ENV_HUB_DEV_PASSWORD,
     ENV_KAGGLE_USERNAME,
@@ -16,22 +18,21 @@ from hub.client.client import HubBackendClient
 def hub_cloud_dev_credentials(request):
     if not is_opt_true(request, HUB_CLOUD_OPT):
         pytest.skip()
+        return None, None
 
-    # TODO: use dev environment
-
+    set_dev(True)
+    username = os.getenv(ENV_HUB_DEV_USERNAME)
     password = os.getenv(ENV_HUB_DEV_PASSWORD)
 
-    assert (
-        password is not None
-    ), f"Hub dev password was not found in the environment variable '{ENV_HUB_DEV_PASSWORD}'. This is necessary for testing hub cloud datasets."
+    assert username is not None, f"Please set the environment variable {ENV_HUB_DEV_USERNAME} to run hub cloud tests."
+    assert password is not None, f"Please set the environment variable {ENV_HUB_DEV_PASSWORD} to run hub cloud tests."
 
-    return HUB_CLOUD_DEV_USERNAME, password
+    return username, password
 
 
 @pytest.fixture(scope="session")
 def hub_cloud_dev_token(hub_cloud_dev_credentials):
     username, password = hub_cloud_dev_credentials
-
     client = HubBackendClient()
     token = client.request_auth_token(username, password)
     return token
