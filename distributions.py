@@ -113,14 +113,28 @@ def get_hub_loss(buffer_size: int):
     return 5
 
 
+def get_numpy_loss():
+    return 1
+
+
 
 if __name__ == '__main__':
     create_dataset()
 
     buffer_sizes = [0, 1]
-    hub_shuffled_losses = [get_hub_loss(buffer_size) for buffer_size in buffer_sizes]
 
-    plt.plot(buffer_sizes, hub_shuffled_losses)
+    hub_shuffled_losses = [get_hub_loss(buffer_size) for buffer_size in buffer_sizes]
+    numpy_losses = [get_numpy_loss() for _ in buffer_sizes]
+
+    plt.title("pytorch shuffling quality")
+
+    plt.plot(buffer_sizes, hub_shuffled_losses, label="hub")
+    plt.plot(buffer_sizes, numpy_losses, label="target")
+
+    plt.legend()
+    plt.xlabel("shuffle buffer (0=unshuffled)")
+    plt.ylabel("mean absolute error to uniform distribution")
+
     plt.show()
 
 
