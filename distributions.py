@@ -9,16 +9,18 @@ from torch.nn.functional import l1_loss as mae
 
 from scipy.fft import idct
 
+# the target frequency is used to determine the perfect uniform batch of a batch.
 target_frequency = 10
 
+WORKERS = 0
 DATASET_URI = "hub://activeloop/cifar100-train"
 ds = hub.load(DATASET_URI)
 num_classes = len(ds.labels.info.class_names)
 BATCH_SIZE = num_classes * target_frequency
 
 
-def get_best_case_distribution(num_classes: int):
-    """Model performance is optimal when the average distribution of batches is fully uniform."""
+def get_best_case_batch(num_classes: int):
+    """Model performance is optimal when the average batch of batches is fully uniform."""
     values = []
     for c in range(num_classes):
         for _ in range(target_frequency):
@@ -27,59 +29,90 @@ def get_best_case_distribution(num_classes: int):
     return np.array(values, dtype=int)
 
 
-def get_normal_case_distribution(num_classes: int):
-    """This is what class distributions will look like in the real world."""
+def get_normal_case_batch(num_classes: int):
+    """This is what class batches will look like in the real world."""
     return np.random.randint(0, num_classes, size=BATCH_SIZE, dtype=int)
 
 
-def get_worst_case_distribution(num_classes: int, batch_idx: int):
+def get_worst_case_batch(num_classes: int, batch_idx: int):
     """Model performance is the worst when a batch contains only 1 class."""
     use_class = batch_idx % num_classes
     values = [use_class] * BATCH_SIZE
     return np.array(values, dtype=int)
 
 
-def plot_distributions(distributions: List[np.ndarray], titles: List[str], num_classes: int):
-    assert len(distributions) == len(titles)
+def plot_batches(batches: List[np.ndarray], titles: List[str], num_classes: int):
+    assert len(batches) == len(titles)
 
-    fig, axs = plt.subplots(len(distributions))
+    fig, axs = plt.subplots(len(batches))
 
-    for i in range(len(distributions)):
+    for i in range(len(batches)):
         axs[i].title.set_text(titles[i])
         # axs[i].hist(actual_labels, bins=bins)
-        axs[i].hist(distributions[i], bins=num_classes)
+        axs[i].hist(batches[i], bins=num_classes)
 
     plt.show()
 
 
-if __name__ == '__main__':
-    # best_case_distribution = get_best_case_distribution(num_classes)
-    # normal_case_distribution = get_normal_case_distribution(num_classes)
-    # worst_case_distribution = get_worst_case_distribution(num_classes, 90)
+def quantify_batches(batches: List[np.ndarray], titles: List[str], target_batch: np.ndarray):
+    """The mean absolute error of the frequencies between each `batch` in `batches` is calculated with `target_batch` as the target.
+    
+    Minimum loss for any given batch is 0.
+    """
 
-    # plot_distributions(
-    #     [best_case_distribution, normal_case_distribution, worst_case_distribution], 
+    losses = {}
+
+    T = torch.tensor(target_batch)
+    freq_T = torch.unique(T, return_counts=True)[1].float()
+
+    for batch, title in zip(batches, titles):
+        assert len(batch) == BATCH_SIZE
+
+        # get frequencies of classes in the batch
+        X = torch.tensor(batch)
+        freq_X = torch.unique(X, return_counts=True)[1].float()
+
+        loss = mae(freq_X, freq_T).item()
+        losses[title] = loss
+
+    return losses
+
+
+
+if __name__ == '__main__':
+    # best_case_batch = get_best_case_batch(num_classes)
+    # normal_case_batch = get_normal_case_batch(num_classes)
+    # worst_case_batch = get_worst_case_batch(num_classes, 90)
+
+    # plot_batches(
+    #     [best_case_batch, normal_case_batch, worst_case_batch], 
     #     ["best case", "normal case", "worst case"],
     #     num_classes
     # )
     
 
-    # plot_dist(get_target_distribution(num_classes), "Target Distribution", num_classes)
+    # plot_dist(get_target_batch(num_classes), "Target batch", num_classes)
 
-    ptds = ds.pytorch(num_workers=2, batch_size=BATCH_SIZE, tensors=["images", "labels"])
-
-
+    ptds = ds.pytorch(num_workers=WORKERS, batch_size=BATCH_SIZE, tensors=["images", "labels"])
     for i, batch in enumerate(tqdm(ptds)):  
         X, T = batch
 
-        # generate our comparison distributions
-        current_distribution = T.flatten().numpy()
-        best_case_distribution = get_best_case_distribution(num_classes)
-        normal_case_distribution = get_normal_case_distribution(num_classes)
-        worst_case_distribution = get_worst_case_distribution(num_classes, i)
+        # generate our comparison batches
+        current_batch = T.flatten().numpy()
+        best_case_batch = get_best_case_batch(num_classes)
+        normal_case_batch = get_normal_case_batch(num_classes)
+        worst_case_batch = get_worst_case_batch(num_classes, i)
 
-        plot_distributions(
-            [current_distribution, best_case_distribution, normal_case_distribution, worst_case_distribution], 
+
+        losses = quantify_batches(
+            [current_batch, best_case_batch, normal_case_batch, worst_case_batch], 
+            ["current batch", "best case", "normal case", "worst case"], 
+            best_case_batch,
+        )
+        print(losses)
+
+        plot_batches(
+            [current_batch, best_case_batch, normal_case_batch, worst_case_batch], 
             ["current batch", "best case", "normal case", "worst case"], 
             num_classes
         )
