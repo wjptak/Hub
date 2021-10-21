@@ -1,3 +1,4 @@
+from collections import defaultdict
 from typing import List
 import matplotlib.pyplot as plt
 import hub
@@ -10,8 +11,9 @@ from torch.nn.functional import l1_loss as mae
 from scipy.fft import idct
 
 # the target frequency is used to determine the perfect uniform batch of a batch.
-target_frequency = 10
+target_frequency = 2
 
+MAX_BATCHES = 500
 WORKERS = 0
 DATASET_URI = "hub://activeloop/cifar100-train"
 ds = hub.load(DATASET_URI)
@@ -54,6 +56,16 @@ def plot_batches(batches: List[np.ndarray], titles: List[str], num_classes: int)
     plt.show()
 
 
+def calculate_frequencies(tensor: torch.Tensor):
+    """Calculate the frequencies of each class in the tensor."""
+
+    freq = torch.zeros(num_classes)
+    for x in tensor.flatten():
+        freq[x] += 1
+    return freq
+
+
+
 def quantify_batches(batches: List[np.ndarray], titles: List[str], target_batch: np.ndarray):
     """The mean absolute error of the frequencies between each `batch` in `batches` is calculated with `target_batch` as the target.
     
@@ -63,14 +75,16 @@ def quantify_batches(batches: List[np.ndarray], titles: List[str], target_batch:
     losses = {}
 
     T = torch.tensor(target_batch)
-    freq_T = torch.unique(T, return_counts=True)[1].float()
+    # freq_T = torch.unique(T, return_counts=True)[1].float()
+    freq_T = calculate_frequencies(T)
 
     for batch, title in zip(batches, titles):
-        assert len(batch) == BATCH_SIZE
+        #assert len(batch) == BATCH_SIZE, f"{title} batch length was {len(batch)} but expected {BATCH_SIZE}"
 
         # get frequencies of classes in the batch
         X = torch.tensor(batch)
-        freq_X = torch.unique(X, return_counts=True)[1].float()
+        # freq_X = torch.unique(X, return_counts=True)[1].float()  # TODO: better way to get frequencies
+        freq_X = calculate_frequencies(X)
 
         loss = mae(freq_X, freq_T).item()
         losses[title] = loss
@@ -78,23 +92,33 @@ def quantify_batches(batches: List[np.ndarray], titles: List[str], target_batch:
     return losses
 
 
+def plot_batches_over_time(losses_per_batch: dict):
+    for key, loss_per_batch in losses_per_batch.items():
+        plt.plot(loss_per_batch, label=key)
+
+    # set log scale
+    plt.legend()
+    plt.show()
+
 
 if __name__ == '__main__':
     # best_case_batch = get_best_case_batch(num_classes)
     # normal_case_batch = get_normal_case_batch(num_classes)
     # worst_case_batch = get_worst_case_batch(num_classes, 90)
-
     # plot_batches(
     #     [best_case_batch, normal_case_batch, worst_case_batch], 
     #     ["best case", "normal case", "worst case"],
     #     num_classes
     # )
-    
 
-    # plot_dist(get_target_batch(num_classes), "Target batch", num_classes)
+    losses_per_batch = defaultdict(list)
 
     ptds = ds.pytorch(num_workers=WORKERS, batch_size=BATCH_SIZE, tensors=["images", "labels"])
-    for i, batch in enumerate(tqdm(ptds)):  
+    for i, batch in enumerate(tqdm(ptds, total=min(len(ptds) - 1, MAX_BATCHES))):  
+        if i == len(ptds) - 1 or i > MAX_BATCHES:
+            # skip last batch (not full)
+            break
+
         X, T = batch
 
         # generate our comparison batches
@@ -105,20 +129,21 @@ if __name__ == '__main__':
 
 
         losses = quantify_batches(
-            [current_batch, best_case_batch, normal_case_batch, worst_case_batch], 
-            ["current batch", "best case", "normal case", "worst case"], 
+            [current_batch, best_case_batch, normal_case_batch],# , worst_case_batch], 
+            ["current batch", "best case", "normal case"],# , "worst case"], 
             best_case_batch,
         )
-        print(losses)
+        # print(losses)
 
-        plot_batches(
-            [current_batch, best_case_batch, normal_case_batch, worst_case_batch], 
-            ["current batch", "best case", "normal case", "worst case"], 
-            num_classes
-        )
+        for key, loss in losses.items():
+            losses_per_batch[key].append(loss)
 
-        if i == len(ptds) - 1:
-            # skip last batch (not full)
-            break
+        # plot_batches(
+        #     [current_batch, best_case_batch, normal_case_batch, worst_case_batch], 
+        #     ["current batch", "best case", "normal case", "worst case"], 
+        #     num_classes
+        # )
 
-        break
+        
+
+    plot_batches_over_time(losses_per_batch)
