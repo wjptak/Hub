@@ -53,18 +53,15 @@ def plot_distributions(distributions: List[np.ndarray], titles: List[str], num_c
 
 
 if __name__ == '__main__':
+    # best_case_distribution = get_best_case_distribution(num_classes)
+    # normal_case_distribution = get_normal_case_distribution(num_classes)
+    # worst_case_distribution = get_worst_case_distribution(num_classes, 90)
 
-    best_case_distribution = get_best_case_distribution(num_classes)
-    normal_case_distribution = get_normal_case_distribution(num_classes)
-    worst_case_distribution = get_worst_case_distribution(num_classes, 0)
-
-    plot_distributions(
-        [best_case_distribution, normal_case_distribution, worst_case_distribution], 
-        ["best case", "normal case", "worst case"],
-        num_classes
-    )
-    
-    exit()
+    # plot_distributions(
+    #     [best_case_distribution, normal_case_distribution, worst_case_distribution], 
+    #     ["best case", "normal case", "worst case"],
+    #     num_classes
+    # )
     
 
     # plot_dist(get_target_distribution(num_classes), "Target Distribution", num_classes)
@@ -75,22 +72,20 @@ if __name__ == '__main__':
     for i, batch in enumerate(tqdm(ptds)):  
         X, T = batch
 
-        T = T.flatten().float()
-        q = get_best_case_distribution(num_classes)
-        loss = mae(T.flatten(), torch.tensor(q).float()).item()
-        print(loss)
-
         # generate our comparison distributions
+        current_distribution = T.flatten().numpy()
         best_case_distribution = get_best_case_distribution(num_classes)
         normal_case_distribution = get_normal_case_distribution(num_classes)
         worst_case_distribution = get_worst_case_distribution(num_classes, i)
 
-        plot_distributions([best_case_distribution, normal_case_distribution, worst_case_distribution], ["best case", "normal case", "worst case"])
+        plot_distributions(
+            [current_distribution, best_case_distribution, normal_case_distribution, worst_case_distribution], 
+            ["current batch", "best case", "normal case", "worst case"], 
+            num_classes
+        )
 
         if i == len(ptds) - 1:
             # skip last batch (not full)
             break
-
-        
 
         break
