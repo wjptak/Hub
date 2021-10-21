@@ -13,7 +13,7 @@ target_frequency = 4
 
 MAX_BATCHES = 500
 EPOCHS = 5
-WORKERS = 0
+WORKERS = 4
 DATASET_URI = "hub://activeloop/cifar100-train"
 ds = hub.load(DATASET_URI)
 num_classes = len(ds.labels.info.class_names)
