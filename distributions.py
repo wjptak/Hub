@@ -8,10 +8,8 @@ from tqdm import tqdm
 import torch
 from torch.nn.functional import l1_loss as mae
 
-from scipy.fft import idct
-
 # the target frequency is used to determine the perfect uniform batch of a batch.
-target_frequency = 2
+target_frequency = 10
 
 MAX_BATCHES = 500
 WORKERS = 0
@@ -101,7 +99,26 @@ def plot_batches_over_time(losses_per_batch: dict):
     plt.show()
 
 
-if __name__ == '__main__':
+def get_average_losses(losses_per_batch: dict):
+    return {k: np.mean(v) for k, v in losses_per_batch.items()}
+
+
+def plot_losses_over_buffer_size(hub_losses: List[float], numpy_losses: List[float], buffer_sizes: List[int]):
+    assert len(hub_losses) == len(numpy_losses) and len(hub_losses) == len(buffer_sizes)
+
+    plt.title("quality of random shuffling")
+
+    plt.plot(buffer_sizes, hub_losses, label="hub")
+    plt.plot(buffer_sizes, numpy_losses, label="numpy")
+
+    plt.ylabel("mae(batch_frequency, uniform_frequencies)\nlower=better")
+    plt.xlabel("buffer size")
+
+    plt.legend()
+    plt.show()
+
+
+def get_losses_for_buffer_size(buffer_size: int) -> dict:
     # best_case_batch = get_best_case_batch(num_classes)
     # normal_case_batch = get_normal_case_batch(num_classes)
     # worst_case_batch = get_worst_case_batch(num_classes, 90)
@@ -113,19 +130,19 @@ if __name__ == '__main__':
 
     losses_per_batch = defaultdict(list)
 
-    ptds = ds.pytorch(num_workers=WORKERS, batch_size=BATCH_SIZE, tensors=["images", "labels"])
+    ptds = ds.pytorch(num_workers=WORKERS, batch_size=BATCH_SIZE, tensors=["images", "labels"], buffer_size=buffer_size)
     for i, batch in enumerate(tqdm(ptds, total=min(len(ptds) - 1, MAX_BATCHES))):  
         if i == len(ptds) - 1 or i > MAX_BATCHES:
             # skip last batch (not full)
             break
 
-        X, T = batch
+        _, T = batch
 
         # generate our comparison batches
         current_batch = T.flatten().numpy()
         best_case_batch = get_best_case_batch(num_classes)
         normal_case_batch = get_normal_case_batch(num_classes)
-        worst_case_batch = get_worst_case_batch(num_classes, i)
+        # worst_case_batch = get_worst_case_batch(num_classes, i)
 
 
         losses = quantify_batches(
@@ -144,6 +161,20 @@ if __name__ == '__main__':
         #     num_classes
         # )
 
-        
+    # plot_batches_over_time(losses_per_batch)
+    return get_average_losses(losses_per_batch)
 
-    plot_batches_over_time(losses_per_batch)
+if __name__ == '__main__':
+    hub_losses = []
+    numpy_losses = []
+
+    buffer_sizes = [1, 10, 100, 1000, 10000]
+    for buffer_size in buffer_sizes:
+        losses = get_losses_for_buffer_size(buffer_size)
+
+        hub_losses.append(losses["current batch"])
+        numpy_losses.append(losses["normal case"])
+
+    print("hub", hub_losses)
+    print("numpy", numpy_losses)
+    plot_losses_over_buffer_size(hub_losses, numpy_losses, buffer_sizes)
