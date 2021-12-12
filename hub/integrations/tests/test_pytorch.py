@@ -30,7 +30,7 @@ def to_tuple(sample):
 def pytorch_small_shuffle_helper(start, end, dataloader):
     for _ in range(2):
         all_values = []
-        for i, batch in enumerate(dataloader):
+        for batch in dataloader:
             value = batch["image"].numpy()[0][0][0]
             value2 = batch["image2"].numpy()[0][0][0]
             assert value == value2
@@ -152,7 +152,7 @@ def test_pytorch_transform(ds):
 
     for _ in range(2):
         all_values = []
-        for i, batch in enumerate(dls):
+        for batch in dls:
             actual_image = batch[0].numpy()
             actual_image2 = batch[1].numpy()
 
@@ -324,7 +324,7 @@ def test_custom_tensor_order(ds):
             np.testing.assert_array_equal(d1[0], ds.d.numpy()[i])
 
     dls = ds.pytorch(num_workers=0, tensors=["c", "d", "a"])
-    for i, batch in enumerate(dls):
+    for batch in dls:
         c1, d1, a1 = batch
         a2 = batch["a"]
         c2 = batch["c"]
@@ -356,14 +356,7 @@ def test_readonly_with_two_workers(local_ds):
     ds = Dataset(storage=local_ds.storage, read_only=True, verbose=False)
 
     ptds = ds.pytorch(num_workers=2)
-    # no need to check input, only care that readonly works
-    for _ in ptds:
-        pass
-
     ptds = dataset_to_pytorch(ds)
-
-    for _ in ptds:
-        pass
 
 
 @requires_torch
@@ -373,7 +366,7 @@ def test_corrupt_dataset(local_ds, corrupt_image_paths, compressed_image_paths):
     with local_ds:
         local_ds.create_tensor("image", htype="image", sample_compression="jpeg")
         for i in range(3):
-            for i in range(10):
+            for _ in range(10):
                 local_ds.image.append(img_good)
             local_ds.image.append(img_bad)
     num_samples = 0

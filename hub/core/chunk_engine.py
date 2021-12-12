@@ -493,9 +493,8 @@ class ChunkEngine:
             sample = self.read_sample_from_chunk(global_sample_index, chunk)
             shape = sample.shape
 
-            if not aslist and last_shape is not None:
-                if shape != last_shape:
-                    raise DynamicTensorNumpyError(self.key, index, "shape")
+            if not aslist and last_shape is not None and shape != last_shape:
+                raise DynamicTensorNumpyError(self.key, index, "shape")
 
             samples.append(sample)
             last_shape = shape

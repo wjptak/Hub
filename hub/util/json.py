@@ -119,10 +119,7 @@ def _validate_any(obj: Any, params: List[str]):
 
 
 def _validate_union(obj: Any, params: List[str]):
-    for schema in params:
-        if _validate_object(obj, schema):
-            return True
-    return False
+    return any(_validate_object(obj, schema) for schema in params)
 
 
 def _validate_optional(obj: Any, params: List[str]) -> bool:

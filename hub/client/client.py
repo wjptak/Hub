@@ -26,10 +26,7 @@ class HubBackendClient:
     def __init__(self, token: Optional[str] = None):
         self.version = hub.__version__
         self.auth_header = None
-        if token is None:
-            self.token = self.get_token()
-        else:
-            self.token = token
+        self.token = self.get_token() if token is None else token
         self.auth_header = f"Bearer {self.token}"
 
     def get_token(self):
@@ -226,23 +223,21 @@ class HubBackendClient:
     ):
         organizations = self.get_user_organizations()
         if workspace in organizations:
-            response = self.request(
+            return self.request(
                 "GET",
                 suffix_user,
                 endpoint=self.endpoint(),
                 params={"organization": workspace},
             ).json()
-        else:
-            print(
-                f'You are not a member of organization "{workspace}". List of accessible datasets from "{workspace}": ',
-            )
-            response = self.request(
+        print(
+            f'You are not a member of organization "{workspace}". List of accessible datasets from "{workspace}": ',
+        )
+        return self.request(
                 "GET",
                 suffix_public,
                 endpoint=self.endpoint(),
                 params={"organization": workspace},
             ).json()
-        return response
 
     def get_datasets(self, workspace: str):
         suffix_public = LIST_DATASETS.format("public")

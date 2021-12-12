@@ -95,7 +95,7 @@ class InvalidTensorNameError(Exception):
                 f"The use of a reserved attribute '{name}' as a tensor name is invalid."
             )
         else:
-            msg = f"Tensor name cannot be empty."
+            msg = 'Tensor name cannot be empty.'
         super().__init__(msg)
 
 
@@ -104,7 +104,7 @@ class InvalidTensorGroupNameError(Exception):
         if name:
             msg = f"The use of a reserved attribute '{name}' as a tensor group name is invalid."
         else:
-            msg = f"Tensor group name cannot be empty."
+            msg = 'Tensor group name cannot be empty.'
         super().__init__(msg)
 
 
@@ -122,10 +122,10 @@ class InvalidShapeIntervalError(Exception):
         s = message
 
         if lower is not None:
-            s += f" lower={str(lower)}"
+            s += f' lower={lower}'
 
         if upper is not None:
-            s += f" upper={str(upper)}"
+            s += f' upper={upper}'
 
         super().__init__(s)
 
@@ -200,7 +200,7 @@ class InvalidHubPathException(Exception):
 class PathNotEmptyException(Exception):
     def __init__(self):
         super().__init__(
-            f"Please use a url that points to an existing Hub Dataset or an empty folder. If you wish to delete the folder and its contents, you may run hub.delete(dataset_path, force=True)."
+            'Please use a url that points to an existing Hub Dataset or an empty folder. If you wish to delete the folder and its contents, you may run hub.delete(dataset_path, force=True).'
         )
 
 
@@ -368,8 +368,7 @@ class InvalidImageDimensions(Exception):
 class TensorUnsupportedSampleType(Exception):
     def __init__(self) -> None:
         super().__init__(
-            f"Unable to append sample. Please specify numpy array, sequence of numpy arrays"
-            "or resulting dictionary from .read() to be added to the tensor"
+            'Unable to append sample. Please specify numpy array, sequence of numpy arraysor resulting dictionary from .read() to be added to the tensor'
         )
 
 
@@ -396,8 +395,7 @@ class MetaAlreadyExistsError(MetaError):
 class MetaInvalidKey(MetaError):
     def __init__(self, name: str, available_keys: List[str]):
         super().__init__(
-            f'"{name}" is an invalid key for meta (`meta_object.{name}`). \
-            Maybe a typo? Available keys: {str(available_keys)}'
+            f'"{name}" is an invalid key for meta (`meta_object.{name}`). \\\x1f            Maybe a typo? Available keys: {available_keys}'
         )
 
 
@@ -459,10 +457,7 @@ class TensorMetaMutuallyExclusiveKeysError(MetaError):
     def __init__(
         self, keys: Optional[List[str]] = None, custom_message: Optional[str] = None
     ):
-        if custom_message:
-            msg = custom_message
-        else:
-            msg = f"Following fields are mutually exclusive: {keys}. "
+        msg = custom_message or f"Following fields are mutually exclusive: {keys}. "
         super().__init__(msg)
 
 

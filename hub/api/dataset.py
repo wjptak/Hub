@@ -260,13 +260,13 @@ class dataset:
                 remove_path_from_backend(path, token)
                 if verbose:
                     logger.info(f"{path} folder deleted successfully.")
+            elif isinstance(e, (DatasetHandlerError, PathNotEmptyException)):
+                raise DatasetHandlerError(
+                    "A Hub dataset wasn't found at the specified path. "
+                    "This may be due to a corrupt dataset or a wrong path. "
+                    "If you want to delete the data at the path regardless, use force=True"
+                )
             else:
-                if isinstance(e, (DatasetHandlerError, PathNotEmptyException)):
-                    raise DatasetHandlerError(
-                        "A Hub dataset wasn't found at the specified path. "
-                        "This may be due to a corrupt dataset or a wrong path. "
-                        "If you want to delete the data at the path regardless, use force=True"
-                    )
                 raise
 
     @staticmethod
@@ -475,9 +475,12 @@ class dataset:
             },
         )
 
-        if os.path.isdir(src) and os.path.isdir(dest):
-            if os.path.samefile(src, dest):
-                raise SamePathException(src)
+        if (
+            os.path.isdir(src)
+            and os.path.isdir(dest)
+            and os.path.samefile(src, dest)
+        ):
+            raise SamePathException(src)
 
         download_kaggle_dataset(
             tag,
@@ -486,7 +489,7 @@ class dataset:
             exist_ok=exist_ok,
         )
 
-        ds = hub.ingest(
+        return hub.ingest(
             src=src,
             dest=dest,
             images_compression=images_compression,
@@ -495,8 +498,6 @@ class dataset:
             summary=summary,
             **dataset_kwargs,
         )
-
-        return ds
 
     @staticmethod
     @hub_reporter.record_call
@@ -516,5 +517,4 @@ class dataset:
             List of dataset names.
         """
         client = HubBackendClient(token=token)
-        datasets = client.get_datasets(workspace=workspace)
-        return datasets
+        return client.get_datasets(workspace=workspace)

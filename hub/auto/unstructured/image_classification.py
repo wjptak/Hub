@@ -29,10 +29,7 @@ def _get_file_paths(directory: Path, relative_to: Union[str, Path] = "") -> List
     for path_str in g:
         if os.path.isfile(path_str):
             path = Path(path_str)
-            if relative_to:
-                relative_path = Path(path).relative_to(directory)
-            else:
-                relative_path = path
+            relative_path = Path(path).relative_to(directory) if relative_to else path
             file_paths.append(relative_path)
     return file_paths
 
@@ -78,17 +75,19 @@ class ImageClassification(UnstructuredDataset):
     # TODO: make lazy/memoized property
     def get_set_names(self) -> Tuple[str, ...]:
         # TODO: move outside class
-        set_names = set()
-        for file_path in self._abs_file_paths:
-            set_names.add(_set_name_from_path(file_path))
+        set_names = {
+            _set_name_from_path(file_path) for file_path in self._abs_file_paths
+        }
+
         return tuple(sorted(set_names))  # TODO: lexicographical sorting
 
     # TODO: make lazy/memoized property
     def get_class_names(self) -> Tuple[str, ...]:
         # TODO: move outside class
-        class_names = set()
-        for file_path in self._abs_file_paths:
-            class_names.add(_class_name_from_path(file_path))
+        class_names = {
+            _class_name_from_path(file_path) for file_path in self._abs_file_paths
+        }
+
         return tuple(sorted(class_names))  # TODO: lexicographical sorting
 
     def structure(  # type: ignore

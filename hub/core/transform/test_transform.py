@@ -198,7 +198,7 @@ def test_single_transform_hub_dataset_htypes(ds, num_workers, scheduler):
 @all_schedulers
 @enabled_non_gcs_datasets
 def test_chain_transform_list_small(ds, scheduler):
-    ls = [i for i in range(100)]
+    ls = list(range(100))
     ds_out = ds
     ds_out.create_tensor("image")
     ds_out.create_tensor("label")
@@ -231,7 +231,7 @@ def test_chain_transform_list_small(ds, scheduler):
 @enabled_non_gcs_datasets
 @pytest.mark.xfail(raises=TransformError, strict=False)
 def test_chain_transform_list_big(ds, scheduler):
-    ls = [i for i in range(2)]
+    ls = list(range(2))
     ds_out = ds
     ds_out.create_tensor("image")
     ds_out.create_tensor("label")

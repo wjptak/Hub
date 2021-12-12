@@ -11,11 +11,10 @@ def _get_bigger_dtype(d1, d2):
             return d1
         else:
             return d2
+    elif np.can_cast(d2, d1):
+        return d2
     else:
-        if np.can_cast(d2, d1):
-            return d2
-        else:
-            return np.object
+        return np.object
 
 
 def get_dtype(val: Union[np.ndarray, Sequence, Sample]) -> np.dtype:

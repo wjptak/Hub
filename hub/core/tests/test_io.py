@@ -17,7 +17,7 @@ class MockStreaming(Streaming):
         super().__init__()
 
     def read(self, schedule: Schedule) -> Iterator:
-        yield from range(0, 100)
+        yield from range(100)
 
 
 def test_shuffle_buffer():

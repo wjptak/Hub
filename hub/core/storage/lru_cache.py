@@ -248,10 +248,7 @@ class LRUCache(StorageProvider):
             if not cachable or remove_from_dirty:
                 self.dirty_keys.discard(path)
 
-            if cachable:
-                self.next_storage[path] = value.tobytes()
-            else:
-                self.next_storage[path] = value
+            self.next_storage[path] = value.tobytes() if cachable else value
 
     def _free_up_space(self, extra_size: int):
         """Helper function that frees up space the requred space in cache.

@@ -53,7 +53,7 @@ CHUNKS_FOLDER = "chunks"
 
 ENCODED_CHUNK_NAMES_FOLDER = "chunks_index"
 # unsharded naming will help with backwards compatibility
-ENCODED_CHUNK_NAMES_FILENAME = f"unsharded"
+ENCODED_CHUNK_NAMES_FILENAME = 'unsharded'
 
 AGREEMENT_FILENAME = "agreement.txt"
 

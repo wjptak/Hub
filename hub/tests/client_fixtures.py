@@ -43,8 +43,7 @@ def hub_cloud_dev_token(hub_cloud_dev_credentials):
     username, password = hub_cloud_dev_credentials
 
     client = HubBackendClient()
-    token = client.request_auth_token(username, password)
-    return token
+    return client.request_auth_token(username, password)
 
 
 @pytest.fixture(scope="session")
@@ -57,6 +56,7 @@ def hub_kaggle_credentials(request):
 
     assert (
         key is not None
-    ), f"Kaggle credentials were not found in environment variable. This is necessary for testing kaggle ingestion datasets."
+    ), 'Kaggle credentials were not found in environment variable. This is necessary for testing kaggle ingestion datasets.'
+
 
     return username, key

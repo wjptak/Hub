@@ -33,11 +33,10 @@ mp = torch.multiprocessing.get_context()
 def use_scheduler(num_workers: int, ensure_order: bool):
     if num_workers <= 1:
         return SingleThreadScheduler()
+    if ensure_order:
+        return MultiThreadedNaiveScheduler(num_workers)
     else:
-        if ensure_order:
-            return MultiThreadedNaiveScheduler(num_workers)
-        else:
-            return SequentialMultithreadScheduler(num_workers)
+        return SequentialMultithreadScheduler(num_workers)
 
 
 def cast_type(tensor: np.ndarray):
@@ -290,30 +289,32 @@ class PrefetchConcurrentIterator(Iterable):
         self._shutdown_all()
 
     def _shutdown_all(self):
-        if not self.shutdown:
-            self.workers_done.set()
+        if self.shutdown:
+            return
 
-            try:
-                for wid in range(self.num_workers):
-                    self.request_queues[wid].put(None)
-                    self.workers[wid].join(timeout=5)
+        self.workers_done.set()
 
-                for queue in self.request_queues:
-                    queue.cancel_join_thread()
-                    queue.close()
+        try:
+            for wid in range(self.num_workers):
+                self.request_queues[wid].put(None)
+                self.workers[wid].join(timeout=5)
 
-                self.data_queue.cancel_join_thread()
-                self.data_queue.close()
-            finally:
-                if self._worker_pids_set:
-                    _remove_worker_pids(id(self))
-                    self._worker_pids_set = False
+            for queue in self.request_queues:
+                queue.cancel_join_thread()
+                queue.close()
 
-                for worker in self.workers:
-                    if worker.is_alive():
-                        worker.terminate()
+            self.data_queue.cancel_join_thread()
+            self.data_queue.close()
+        finally:
+            if self._worker_pids_set:
+                _remove_worker_pids(id(self))
+                self._worker_pids_set = False
 
-            self.shutdown = True
+            for worker in self.workers:
+                if worker.is_alive():
+                    worker.terminate()
+
+        self.shutdown = True
 
 
 class ShufflingIterableDataset(torch.utils.data.IterableDataset):

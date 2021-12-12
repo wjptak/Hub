@@ -38,7 +38,7 @@ def cache_chain(request):
         storage = request.getfixturevalue(requested_storage)
         storages.append(storage)
 
-        if len(cache_sizes) == 0:
+        if not cache_sizes:
             cache_sizes.append(MIN_FIRST_CACHE_SIZE)
         elif len(cache_sizes) == 1:
             cache_sizes.append(MIN_SECOND_CACHE_SIZE)

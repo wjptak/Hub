@@ -208,7 +208,7 @@ class SampleStreaming(Streaming):
 
         for idx in block.indices():
 
-            sample = dict()
+            sample = {}
             valid_sample_flag = True
 
             for keyid, (key, engine) in enumerate(self.chunk_engines.items()):
@@ -264,7 +264,7 @@ class SampleStreaming(Streaming):
 
         last_idx: int = 0
 
-        while all([not it.finished for it in iterators]):
+        while all(not it.finished for it in iterators):
             next_it = iterators[argmin(nparray([it.value[0] for it in iterators]))]
             next_it_value = int(next_it.value[0])
 
@@ -279,7 +279,7 @@ class SampleStreaming(Streaming):
                 )
                 streamable_ids.sort()
 
-                if len(streamable_ids) > 0:
+                if streamable_ids:
                     new_block = IOBlock(chunks, streamable_ids)
                     blocks.append(new_block)
 

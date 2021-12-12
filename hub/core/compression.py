@@ -194,14 +194,13 @@ def decompress_bytes(
 ) -> bytes:
     if not buffer:
         return b""
-    if compression == "lz4":
-        if (
-            buffer[:4] == b'\x04"M\x18'
-        ):  # python-lz4 magic number (backward compatiblity)
-            return lz4.frame.decompress(buffer)
-        return numcodecs.lz4.decompress(buffer)
-    else:
+    if compression != "lz4":
         raise SampleDecompressionError()
+    if (
+        buffer[:4] == b'\x04"M\x18'
+    ):  # python-lz4 magic number (backward compatiblity)
+        return lz4.frame.decompress(buffer)
+    return numcodecs.lz4.decompress(buffer)
 
 
 def compress_array(array: np.ndarray, compression: Optional[str]) -> bytes:
@@ -416,7 +415,7 @@ def verify_compressed_file(
             return _verify_jpeg(file), "|u1"
         elif get_compression_type(compression) == AUDIO_COMPRESSION:
             return _read_audio_shape(file, compression), "<f4"  # type: ignore
-        elif compression in ("mp4", "mkv", "avi"):
+        elif compression in {"mp4", "mkv", "avi"}:
             if isinstance(file, (bytes, memoryview, str)):
                 return _read_video_shape(file), "|u1"
         else:
@@ -552,10 +551,7 @@ def _fast_decompress(buf):
         buf = BytesIO(buf)
     img = Image.open(buf)
     img.load()
-    if img.mode == 1:
-        args = ("L",)
-    else:
-        args = (img.mode,)
+    args = ("L", ) if img.mode == 1 else (img.mode, )
     enc = Image._getencoder(img.mode, "raw", args)
     enc.setimage(img.im)
     bufsize = max(65536, img.size[0] * 4)
@@ -720,10 +716,7 @@ def _read_png_shape_and_dtype(f: Union[bytes, BinaryIO]) -> Tuple[Tuple[int, ...
         elif colors == 3:
             nlayers = None
         elif colors == 4:
-            if bits == 8:
-                nlayers = 2
-            else:
-                nlayers = 4
+            nlayers = 2 if bits == 8 else 4
         else:
             nlayers = 4
     shape = size if nlayers is None else size + (nlayers,)
@@ -845,10 +838,7 @@ def _get_video_info(file: Union[bytes, memoryview, str]) -> dict:
     )
     ret["width"] = int(ret["width"])
     ret["height"] = int(ret["height"])
-    if "duration" in ret:
-        ret["duration"] = float(ret["duration"])
-    else:
-        ret["duration"] = duration
+    ret["duration"] = float(ret["duration"]) if "duration" in ret else duration
     ret["rate"] = float(eval(ret["rate"]))
     return ret
 
@@ -857,7 +847,7 @@ DURATION_RE = re.compile(rb"Duration: ([0-9:.]+),")
 
 
 def to_seconds(time):
-    return sum([60 ** i * float(j) for (i, j) in enumerate(time.split(":")[::-1])])
+    return sum(60 ** i * float(j) for (i, j) in enumerate(time.split(":")[::-1]))
 
 
 def _to_hub_mkv(file: str):

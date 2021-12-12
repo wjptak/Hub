@@ -71,11 +71,7 @@ def _download_pil_test_images(tempdir, ext=[".jpg", ".png"]):
         ]
         for d in dirs:
             for f in os.listdir(d):
-                brk = False
-                for k in corrupt_file_keys:
-                    if k in f:
-                        brk = True
-                        break
+                brk = any(k in f for k in corrupt_file_keys)
                 if brk:
                     continue
                 for e in ext:
@@ -131,10 +127,7 @@ def _get_storage_path(
 
     root = info["base_root"]
 
-    path = ""
-    if with_current_test_name:
-        path = current_test_name()
-
+    path = current_test_name() if with_current_test_name else ""
     if info["use_id"]:
         if info["is_id_prefix"]:
             path = posixpath.join(SESSION_ID, path)
@@ -246,19 +239,17 @@ def flower_path():
 @pytest.fixture
 def color_image_paths():
     base = get_dummy_data_path("images")
-    paths = {
+    return {
         "jpeg": os.path.join(base, "dog2.jpg"),
     }
-    return paths
 
 
 @pytest.fixture
 def grayscale_image_paths():
     base = get_dummy_data_path("images")
-    paths = {
+    return {
         "jpeg": os.path.join(base, "hopper_gray.jpg"),
     }
-    return paths
 
 
 @pytest.fixture(scope="session")
