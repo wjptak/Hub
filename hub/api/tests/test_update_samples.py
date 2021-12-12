@@ -51,9 +51,8 @@ def _make_update_assert_equal(
     # this is necessary because `expected` uses `aslist=True` to handle dynamic cases.
     # with `aslist=False`, this wouldn't be necessary.
     expected_value = value
-    if hasattr(value, "__len__"):
-        if len(value) == 1:
-            expected_value = value[0]
+    if hasattr(value, "__len__") and len(value) == 1:
+        expected_value = value[0]
 
     # make updates
     tensor[index] = value
@@ -191,7 +190,7 @@ def test_pre_indexed_tensor(memory_ds):
     tensor.append([12, 13, 14, 15, 16])
     tensor.append([17, 18, 19, 20, 21])
 
-    tensor[0:5][0] = [99, 98, 97]
+    tensor[:5][0] = [99, 98, 97]
     tensor[5:10][0] = [44, 44, 44, 44]
     tensor[4:10][0:2] = [[44, 44, 44, 44], [33]]
 

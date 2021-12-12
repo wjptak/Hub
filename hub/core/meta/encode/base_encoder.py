@@ -131,30 +131,29 @@ class Encoder(ABC):
 
         self._validate_incoming_item(item, num_samples)
 
-        if self.num_samples != 0:
-            if self._combine_condition(item):
-                last_index = self._encoded[-1, LAST_SEEN_INDEX_COLUMN]
-                new_last_index = self._derive_next_last_index(last_index, num_samples)
-
-                self._encoded[-1, LAST_SEEN_INDEX_COLUMN] = new_last_index
-
-            else:
-                decomposable = self._make_decomposable(item)
-
-                last_index = self._encoded[-1, LAST_SEEN_INDEX_COLUMN]
-                next_last_index = self._derive_next_last_index(last_index, num_samples)
-
-                shape_entry = np.array(
-                    [[*decomposable, next_last_index]], dtype=ENCODING_DTYPE
-                )
-
-                self._encoded = np.concatenate([self._encoded, shape_entry], axis=0)
-
-        else:
+        if self.num_samples == 0:
             decomposable = self._make_decomposable(item)
             self._encoded = np.array(
                 [[*decomposable, num_samples - 1]], dtype=ENCODING_DTYPE
             )
+
+        elif self._combine_condition(item):
+            last_index = self._encoded[-1, LAST_SEEN_INDEX_COLUMN]
+            new_last_index = self._derive_next_last_index(last_index, num_samples)
+
+            self._encoded[-1, LAST_SEEN_INDEX_COLUMN] = new_last_index
+
+        else:
+            decomposable = self._make_decomposable(item)
+
+            last_index = self._encoded[-1, LAST_SEEN_INDEX_COLUMN]
+            next_last_index = self._derive_next_last_index(last_index, num_samples)
+
+            shape_entry = np.array(
+                [[*decomposable, next_last_index]], dtype=ENCODING_DTYPE
+            )
+
+            self._encoded = np.concatenate([self._encoded, shape_entry], axis=0)
 
     def _validate_incoming_item(self, item: Any, num_samples: int):
         """Raises appropriate exceptions for when `item` or `num_samples` are invalid.
@@ -275,8 +274,9 @@ class Encoder(ABC):
 
         if action_taken is None:
             raise ValueError(
-                f"Update could not be executed for idx={local_sample_index}, item={str(item)}"
+                f'Update could not be executed for idx={local_sample_index}, item={item}'
             )
+
 
         self._post_process_state(start_row_index=max(row_index - 2, 0))
         self._reset_update_state()

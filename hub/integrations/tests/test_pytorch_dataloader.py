@@ -46,8 +46,7 @@ def throws_exception(streaming, schedule: Schedule):
 
 
 def mock_dataset(cls):
-    instance = cls()
-    return instance
+    return cls()
 
 
 @patch.object(SampleStreaming, "list_blocks", list_blocks)
@@ -62,7 +61,7 @@ def test_dataloader(ds):
 
     result = list(dataloader)
 
-    assert len(result) == sum([len(block) for block in list_blocks()])
+    assert len(result) == sum(len(block) for block in list_blocks())
 
 
 @patch.object(SampleStreaming, "list_blocks", list_blocks)
@@ -92,7 +91,7 @@ def test_more_workers_than_chunk(ds):
 
     result = list(dataloader)
 
-    assert len(result) == sum([len(block) for block in list_blocks()])
+    assert len(result) == sum(len(block) for block in list_blocks())
 
 
 @patch.object(SampleStreaming, "list_blocks", list_blocks)
@@ -111,7 +110,7 @@ def test_big_buffer_size(ds):
 
     result = list(dataloader)
 
-    assert len(result) == sum([len(block) for block in list_blocks()])
+    assert len(result) == sum(len(block) for block in list_blocks())
 
 
 def mock_tranform_f(data):
@@ -169,4 +168,4 @@ def test_method2(ds):
 
     result = list(dataloader)
 
-    assert len(result) == sum([len(block) for block in list_blocks()])
+    assert len(result) == sum(len(block) for block in list_blocks())

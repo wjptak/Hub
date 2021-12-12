@@ -384,10 +384,10 @@ def test_compute_slices(memory_ds):
     _check_tensor(ds.data[0][(0, 1, 6, 10, 15), :], data[0][(0, 1, 6, 10, 15), :])
     _check_tensor(ds.data[0, (0, 1, 5)], data[0, (0, 1, 5)])
     _check_tensor(ds.data[:, :][0], data[:, :][0])
-    _check_tensor(ds.data[:, :][0:2], data[:, :][0:2])
-    _check_tensor(ds.data[0, :][0:2], data[0, :][0:2])
-    _check_tensor(ds.data[:, 0][0:2], data[:, 0][0:2])
-    _check_tensor(ds.data[:, 0][0:2], data[:, 0][0:2])
+    _check_tensor(ds.data[:, :][:2], data[:, :][:2])
+    _check_tensor(ds.data[0, :][:2], data[0, :][:2])
+    _check_tensor(ds.data[:, 0][:2], data[:, 0][:2])
+    _check_tensor(ds.data[:, 0][:2], data[:, 0][:2])
     _check_tensor(ds.data[:, :][0][(0, 1, 2), 0], data[:, :][0][(0, 1, 2), 0])
     _check_tensor(ds.data[0][(0, 1, 2), 0][1], data[0][(0, 1, 2), 0][1])
     _check_tensor(ds.data[:, :][0][(0, 1, 2), 0][1], data[:, :][0][(0, 1, 2), 0][1])
@@ -407,8 +407,8 @@ def test_length_slices(memory_ds):
 
     assert len(ds) == 11
     assert len(ds[0]) == 1
-    assert len(ds[0:1]) == 1
-    assert len(ds[0:0]) == 0
+    assert len(ds[:1]) == 1
+    assert len(ds[:0]) == 0
     assert len(ds[1:10]) == 9
     assert len(ds[1:7:2]) == 3
     assert len(ds[1:8:2]) == 4
@@ -418,8 +418,8 @@ def test_length_slices(memory_ds):
 
     assert len(ds.data) == 11
     assert len(ds.data[0]) == 1
-    assert len(ds.data[0:1]) == 1
-    assert len(ds.data[0:0]) == 0
+    assert len(ds.data[:1]) == 1
+    assert len(ds.data[:0]) == 0
     assert len(ds.data[1:10]) == 9
     assert len(ds.data[1:7:2]) == 3
     assert len(ds.data[1:8:2]) == 4
@@ -428,7 +428,7 @@ def test_length_slices(memory_ds):
     assert len(ds.data[[0, 1, 5, 9]]) == 4
 
     assert ds.data.shape == (11, 1)
-    assert ds[0:5].data.shape == (5, 1)
+    assert ds[:5].data.shape == (5, 1)
     assert ds.data[1:6].shape == (5, 1)
 
 

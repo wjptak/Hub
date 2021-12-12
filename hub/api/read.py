@@ -27,5 +27,4 @@ def read(path: str, verify: bool = False) -> Sample:
         Sample: Sample object. Call `sample.array` to get the `np.ndarray`.
     """
 
-    sample = Sample(path, verify=verify)
-    return sample
+    return Sample(path, verify=verify)

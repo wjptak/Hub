@@ -39,7 +39,7 @@ class ShapeInterval:
                 "Upper cannot contain negative components.", upper=upper
             )
 
-        if not all(l <= u for l, u in zip(lower, upper)):
+        if any(l > u for l, u in zip(lower, upper)):
             raise InvalidShapeIntervalError(
                 "lower[i] must always be <= upper[i].", lower=lower, upper=upper
             )
@@ -50,9 +50,7 @@ class ShapeInterval:
     def astuple(self) -> Tuple[Optional[int], ...]:
         # TODO: named tuple? NHWC shape would be (10, 224, 224, 3) could be (N=10, H=224, W=224, C=3).
 
-        shape = []
-        for low, up in zip(self.lower, self.upper):
-            shape.append(None if low != up else low)  # type: ignore
+        shape = [None if low != up else low for low, up in zip(self.lower, self.upper)]
         return tuple(shape)
 
     @property

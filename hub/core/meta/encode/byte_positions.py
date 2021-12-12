@@ -67,10 +67,7 @@ class BytePositionsEncoder(Encoder):
         for each row if applicable. Used for updating."""
 
         for row_index in range(start_row_index, len(self._encoded)):
-            if row_index == 0:
-                bytes_under_row = 0
-            else:
-                bytes_under_row = self.get_sum_of_bytes(row_index - 1)
+            bytes_under_row = 0 if row_index == 0 else self.get_sum_of_bytes(row_index - 1)
             self._encoded[row_index, START_BYTE_COLUMN] = bytes_under_row
 
     def _derive_value(self, row: np.ndarray, row_index: int, local_sample_index: int):

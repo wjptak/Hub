@@ -36,9 +36,6 @@ def check_storage_provider(storage):
 
     assert len(storage) >= 1
 
-    for _ in storage:
-        pass
-
     del storage[FILE_1]
     del storage[FILE_2]
 

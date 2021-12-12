@@ -16,7 +16,7 @@ def test_subsequent_updates(local_ds_generator):
     with local_ds_generator() as ds:
         ds.create_tensor("tensor")  # dtype is not specified
 
-    assert ds.tensor.dtype == None
+    assert ds.tensor.dtype is None
 
     with local_ds_generator() as ds:
         ds.tensor.extend(np.ones((5, 100, 100)))

@@ -601,8 +601,7 @@ class Dataset:
         """
         tensors = self.version_state["full_tensors"].values()
         chunk_engines = [tensor.chunk_engine for tensor in tensors]
-        size = sum(c.num_chunks * c.min_chunk_size for c in chunk_engines)
-        return size
+        return sum(c.num_chunks * c.min_chunk_size for c in chunk_engines)
 
     @hub_reporter.record_call
     def delete(self, large_ok=False):
@@ -625,14 +624,8 @@ class Dataset:
         self.storage.clear()
 
     def __str__(self):
-        path_str = ""
-        if self.path:
-            path_str = f"path='{self.path}', "
-
-        mode_str = ""
-        if self.read_only:
-            mode_str = f"read_only=True, "
-
+        path_str = f"path='{self.path}', " if self.path else ""
+        mode_str = 'read_only=True, ' if self.read_only else ""
         index_str = f"index={self.index}, "
         if self.index.is_trivial():
             index_str = ""

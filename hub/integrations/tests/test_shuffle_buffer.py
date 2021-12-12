@@ -30,7 +30,7 @@ def test_adding_tensor():
 
     result = buffer.exchange(tensor)
 
-    assert result == None
+    assert result is None
 
 
 def test_constant_tensor():

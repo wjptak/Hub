@@ -20,10 +20,10 @@ def version_compare(v1, v2):
     # compares which list is bigger and fills
     # smaller list with zero (for unequal delimeters)
     if n > m:
-        for i in range(m, n):
+        for _ in range(m, n):
             arr2.append(0)
     elif m > n:
-        for i in range(n, m):
+        for _ in range(n, m):
             arr1.append(0)
 
     # returns 1 if version 1 is bigger and -1 if
@@ -74,13 +74,12 @@ def ffw_dataset_meta(dataset_meta, version):
 
 @ffw
 def ffw_tensor_meta(tensor_meta, version):
-    if version in ("2.0.2", "2.0.3", "2.0.4", "2.0.5"):
-        # these versions allowed tensors to have a dimensionality of 0
-        # newer hub versions require a dimensionality of at least 1
-
-        if len(tensor_meta.min_shape) == 0:
-            tensor_meta.min_shape = [1]
-            tensor_meta.max_shape = [1]
+    if (
+        version in ("2.0.2", "2.0.3", "2.0.4", "2.0.5")
+        and len(tensor_meta.min_shape) == 0
+    ):
+        tensor_meta.min_shape = [1]
+        tensor_meta.max_shape = [1]
 
 
 @ffw

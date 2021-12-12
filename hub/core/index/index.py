@@ -5,14 +5,14 @@ IndexValue = Union[int, slice, Tuple[int]]
 
 
 def has_negatives(s: slice) -> bool:
-    if s.start and s.start < 0:
-        return True
-    elif s.stop and s.stop < 0:
-        return True
-    elif s.step and s.step < 0:
-        return True
-    else:
-        return False
+    return bool(
+        s.start
+        and s.start < 0
+        or s.stop
+        and s.stop < 0
+        or s.step
+        and s.step < 0
+    )
 
 
 def merge_slices(existing_slice: slice, new_slice: slice) -> slice:
@@ -161,7 +161,7 @@ class IndexEntry:
                 new_value = tuple(slice_at_int(self.value, idx) for idx in item)
                 return IndexEntry(new_value)
         elif isinstance(self.value, tuple):
-            if isinstance(item, int) or isinstance(item, slice):
+            if isinstance(item, (int, slice)):
                 return IndexEntry(self.value[item])
             elif isinstance(item, tuple):
                 new_value = tuple(self.value[idx] for idx in item)
@@ -189,8 +189,8 @@ class IndexEntry:
         return (
             isinstance(self.value, slice)
             and not self.value.start
-            and self.value.stop == None
-            and ((self.value.step or 1) == 1)
+            and self.value.stop is None
+            and (self.value.step or 1) == 1
         )
 
     def length(self, parent_length: int) -> int:
@@ -234,11 +234,12 @@ class IndexEntry:
                 IndexEntry(idx).validate(parent_length)
 
         # Check ints that are too large (positive or negative)
-        if isinstance(self.value, int):
-            if self.value >= parent_length or self.value < -parent_length:
-                raise ValueError(
-                    f"Index {self.value} is out of range for tensors with length {parent_length}"
-                )
+        if isinstance(self.value, int) and (
+            self.value >= parent_length or self.value < -parent_length
+        ):
+            raise ValueError(
+                f"Index {self.value} is out of range for tensors with length {parent_length}"
+            )
 
 
 class Index:
@@ -298,9 +299,8 @@ class Index:
         """
         if i is None or i >= len(self.values):
             return Index(self.values + [IndexEntry(item)])
-        else:
-            new_values = self.values[:i] + [self.values[i][item]] + self.values[i + 1 :]
-            return Index(new_values)
+        new_values = self.values[:i] + [self.values[i][item]] + self.values[i + 1 :]
+        return Index(new_values)
 
     def __getitem__(
         self, item: Union[int, slice, List[int], Tuple[IndexValue], "Index"]
@@ -333,7 +333,7 @@ class Index:
             TypeError: Given item should be another Index,
                 or compatible with NumPy's advanced integer indexing.
         """
-        if isinstance(item, int) or isinstance(item, slice):
+        if isinstance(item, (int, slice)):
             ax = self.find_axis()
             return self.compose_at(item, ax)
         elif isinstance(item, tuple):
@@ -360,7 +360,7 @@ class Index:
         as the first entry in the Index.
         """
         index_values = tuple(item.value for item in self.values[1:])
-        samples = list(arr[index_values] for arr in samples)
+        samples = [arr[index_values] for arr in samples]
         return samples
 
     def apply_squeeze(self, samples: List[np.ndarray]):

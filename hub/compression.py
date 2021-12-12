@@ -6,6 +6,7 @@ Supported compressions (formats):
     Bytes : lz4
 
 """
+
 from PIL import Image  # type: ignore
 
 
@@ -78,9 +79,7 @@ COMPRESSION_ALIASES = {"jpg": "jpeg"}
 USE_UNIFORM_COMPRESSION_PER_SAMPLE = True
 
 
-_compression_types = {}
-for c in IMAGE_COMPRESSIONS:
-    _compression_types[c] = IMAGE_COMPRESSION
+_compression_types = {c: IMAGE_COMPRESSION for c in IMAGE_COMPRESSIONS}
 for c in BYTE_COMPRESSIONS:
     _compression_types[c] = BYTE_COMPRESSION
 for c in VIDEO_COMPRESSIONS:

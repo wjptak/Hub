@@ -19,11 +19,11 @@ def _exec_command(command):
 
 def _set_environment_credentials_if_none(kaggle_credentials: dict = None):
     if kaggle_credentials is not None:
-        username = kaggle_credentials.get("username", None)
+        username = kaggle_credentials.get("username")
         if not username:
             raise KaggleMissingCredentialsError(ENV_KAGGLE_USERNAME)
         os.environ[ENV_KAGGLE_USERNAME] = username
-        key = kaggle_credentials.get("key", None)
+        key = kaggle_credentials.get("key")
         if not key:
             raise KaggleMissingCredentialsError(ENV_KAGGLE_KEY)
         os.environ[ENV_KAGGLE_KEY] = key

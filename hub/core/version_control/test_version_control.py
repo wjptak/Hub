@@ -135,12 +135,12 @@ def test_auto_checkout_bug(local_ds):
     f = local_ds.commit("it is 4")
     g = local_ds.checkout(a)
     local_ds.abc[0] = 5
-    dsv = local_ds[0:3]
+    dsv = local_ds[:3]
     dsv.abc[0] = 5
     h = local_ds.commit("it is 5")
     i = local_ds.checkout(e)
     local_ds.abc[0] = 6
-    tsv = local_ds.abc[0:5]
+    tsv = local_ds.abc[:5]
     tsv[0] = 6
     j = local_ds.commit("it is 6")
     local_ds.log()

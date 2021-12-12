@@ -37,7 +37,7 @@ class ShuffleBuffer:
         """
         buffer_len = len(self.buffer)
 
-        if not sample is None:
+        if sample is not None:
             sample_size = self._sample_size(sample)
 
             # fill buffer of not reach limit
@@ -58,29 +58,22 @@ class ShuffleBuffer:
             self.buffer[selected] = sample
 
             self.buffer_used += sample_size
-            self.buffer_used -= self._sample_size(val)
-            return val
         else:
-            if buffer_len > 0:
-
-                # return random selection
-                selected = randrange(buffer_len)
-                val = self.buffer.pop(selected)
-                self.buffer_used -= self._sample_size(val)
-
-                return val
-            else:
+            if buffer_len <= 0:
                 return None
+            # return random selection
+            selected = randrange(buffer_len)
+            val = self.buffer.pop(selected)
+        self.buffer_used -= self._sample_size(val)
+        return val
 
     def emtpy(self) -> bool:
         return len(self.buffer) == 0
 
     def _sample_size(self, sample):
         return sum(
-            [
-                tensor.storage().element_size() * reduce(mul, tensor.shape, 1)
-                for _, tensor in sample.items()
-            ]
+            tensor.storage().element_size() * reduce(mul, tensor.shape, 1)
+            for _, tensor in sample.items()
         )
 
     def __len__(self):

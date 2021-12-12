@@ -117,7 +117,7 @@ class Sample:
         if self._shape is not None:
             return
         if f is None:
-            f = self.path if self.path else self.compressed_bytes[self._compression]
+            f = self.path or self.compressed_bytes[self._compression]
         self._compression, self._shape, self._typestr = read_meta_from_compressed_file(
             f
         )

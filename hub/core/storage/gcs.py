@@ -283,10 +283,9 @@ class GCSProvider(StorageProvider):
 
     def __contains__(self, key):
         """Does key exist in mapping?"""
-        stats = storage.Blob(
+        return storage.Blob(
             bucket=self.client_bucket, name=self._get_path_from_key(key)
         ).exists(self.client_bucket.client)
-        return stats
 
     def __getstate__(self):
         return (self.root, self.token, self.missing_exceptions, self.project)

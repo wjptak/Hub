@@ -70,8 +70,7 @@ def write_version(version, buffer) -> int:
     len_version = len(version)
     buffer[0] = len_version
     buffer[1 : 1 + len_version] = version.encode("ascii")
-    offset = 1 + len_version
-    return offset
+    return 1 + len_version
 
 
 def write_shape_info(shape_info, buffer, offset) -> int:
@@ -184,7 +183,7 @@ def serialize_chunkids(version: str, ids: Sequence[np.ndarray]) -> memoryview:
         Serialized chunk ids as memoryview.
     """
     len_version = len(version)
-    flatbuff = bytearray(1 + len_version + sum([x.nbytes for x in ids]))
+    flatbuff = bytearray(1 + len_version + sum(x.nbytes for x in ids))
 
     # Write version
     len_version = len(version)
